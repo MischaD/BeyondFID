@@ -172,3 +172,4 @@ log/
 CelebV-HQ
 BeyondFID/data
 *.tar.gz
+beyondfid/feature_extractor_models/byol/model.pth

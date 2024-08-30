@@ -1,6 +1,7 @@
 # BeyondFID
 A python package to streamline evaluation of unconditional image generation models. 
 
+
 ## installation 
 
     pip install beyondfid
@@ -36,6 +37,9 @@ As CLI
                      --output_path "path/to/output"\
                      --results_filename "results.json"\
                      --no_inception_score # skips computation of inception score
+
+                    # adjust config: 
+                    "--config-update=metrics.fid.model=random,feature_extractors.names=fid"
 
 or within python 
 

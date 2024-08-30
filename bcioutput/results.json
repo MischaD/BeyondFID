@@ -1,0 +1,75 @@
+{
+    "fid_inception": {
+        "fid": 233.03538988110847,
+        "mean_term": 134.3069610595703,
+        "var_term": 331.6850761902303,
+        "cov_term": -232.95664736869213,
+        "real": "bcioutput/inception/hashdata_inception_8de8a4e5365fc8f6330167988e0767581a1b0404.pt",
+        "snth": "bcioutput/inception/hashdata_inception_3e12659ffacbc8091133d84e7cd2eb01def695f6.pt"
+    },
+    "fid_byol": {
+        "fid": 0.032940073191398855,
+        "mean_term": 0.016252541914582253,
+        "var_term": 0.2974380447764132,
+        "cov_term": -0.2807505134995966,
+        "real": "bcioutput/byol/hashdata_byol_8de8a4e5365fc8f6330167988e0767581a1b0404.pt",
+        "snth": "bcioutput/byol/hashdata_byol_3e12659ffacbc8091133d84e7cd2eb01def695f6.pt"
+    },
+    "fid_random": {},
+    "prdc_inception": {
+        "precision": 0.005005889281507656,
+        "recall": 0.0038280329799764428,
+        "density": 0.0055948174322732625,
+        "coverage": 0.002355712603062426,
+        "real": "bcioutput/inception/hashdata_inception_8de8a4e5365fc8f6330167988e0767581a1b0404.pt",
+        "snth": "bcioutput/inception/hashdata_inception_3e12659ffacbc8091133d84e7cd2eb01def695f6.pt"
+    },
+    "prdc_byol": {
+        "precision": 0.43197879858657245,
+        "recall": 0.35954063604240283,
+        "density": 0.6828621908127208,
+        "coverage": 0.2762073027090695,
+        "real": "bcioutput/byol/hashdata_byol_8de8a4e5365fc8f6330167988e0767581a1b0404.pt",
+        "snth": "bcioutput/byol/hashdata_byol_3e12659ffacbc8091133d84e7cd2eb01def695f6.pt"
+    },
+    "prdc_random": {
+        "precision": 0.04181389870435807,
+        "recall": 0.0032391048292108363,
+        "density": 0.044169611307420496,
+        "coverage": 0.009128386336866903,
+        "real": "bcioutput/random/hashdata_random_8de8a4e5365fc8f6330167988e0767581a1b0404.pt",
+        "snth": "bcioutput/random/hashdata_random_3e12659ffacbc8091133d84e7cd2eb01def695f6.pt"
+    },
+    "fid_dinov2": {
+        "fid": 365.08762241529723,
+        "mean_term": 238.38233947753906,
+        "var_term": 893.6181998785116,
+        "cov_term": -766.9129169407535,
+        "real": "bcioutput/dinov2/hashdata_dinov2_8de8a4e5365fc8f6330167988e0767581a1b0404.pt",
+        "snth": "bcioutput/dinov2/hashdata_dinov2_3e12659ffacbc8091133d84e7cd2eb01def695f6.pt"
+    },
+    "prdc_dinov2": {
+        "precision": 0.012367491166077738,
+        "recall": 0.019729093050647822,
+        "density": 0.012956419316843345,
+        "coverage": 0.008244994110718492,
+        "real": "bcioutput/dinov2/hashdata_dinov2_8de8a4e5365fc8f6330167988e0767581a1b0404.pt",
+        "snth": "bcioutput/dinov2/hashdata_dinov2_3e12659ffacbc8091133d84e7cd2eb01def695f6.pt"
+    },
+    "fid_clip": {
+        "fid": 22.41568644811298,
+        "mean_term": 15.800832748413086,
+        "var_term": 23.01018575851078,
+        "cov_term": -16.395332058810887,
+        "real": "bcioutput/clip/hashdata_clip_8de8a4e5365fc8f6330167988e0767581a1b0404.pt",
+        "snth": "bcioutput/clip/hashdata_clip_3e12659ffacbc8091133d84e7cd2eb01def695f6.pt"
+    },
+    "prdc_clip": {
+        "precision": 0.0017667844522968198,
+        "recall": 0.0,
+        "density": 0.0017667844522968198,
+        "coverage": 0.0005889281507656066,
+        "real": "bcioutput/clip/hashdata_clip_8de8a4e5365fc8f6330167988e0767581a1b0404.pt",
+        "snth": "bcioutput/clip/hashdata_clip_3e12659ffacbc8091133d84e7cd2eb01def695f6.pt"
+    }
+}

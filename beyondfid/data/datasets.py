@@ -2,6 +2,8 @@ import os
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import torchvision.io as io
+from PIL import Image
+
 
 def first_frame(x):
     """Take first frame of video as reference frame"""
@@ -15,22 +17,25 @@ def load_video_as_tensor(video_path):
     return video_tensor
 
 
-class VideoDataset(Dataset):
-    def __init__(self, file_list, basedir, imagesize):
+class GenericDataset(Dataset):
+    def __init__(self, file_list, basedir):
         self.basedir = basedir
         self.file_list = file_list
-        self.transform = transforms.Compose([
-            transforms.Resize((imagesize, imagesize)),
-            transforms.CenterCrop(imagesize),
-        ])
 
     def __len__(self):
         return len(self.file_list)
 
     def __getitem__(self, idx):
-        vid_path = self.file_list[idx]
-        video = load_video_as_tensor(os.path.join(self.basedir, vid_path))
-        frame = first_frame(video)
-        frame = self.transform(frame)
-        return frame, idx, vid_path  # Return index to maintain order
+        path = self.file_list[idx]
+        file_ending = path.split(".")[-1]
+        if file_ending in ["mp4", "avc"] : 
+            video = load_video_as_tensor(os.path.join(self.basedir, path))
+            frame = first_frame(video)
+        else:
+            # Load and normalize an image
+            image_path = os.path.join(self.basedir, path)
+            frame = Image.open(image_path).convert("RGB")  # Ensure image is in RGB format
+            frame = transforms.ToTensor()(frame)
+
+        return frame, idx, path  # Return index to maintain order
 

@@ -1,6 +1,8 @@
 from importlib.machinery import SourceFileLoader
 from beyondfid.data import ALLOWED_EXTENSIONS
 import os
+import json
+from log import logger
 
 def make_exp_config(exp_file):
     if exp_file.endswith(".json"): 
@@ -19,3 +21,12 @@ def make_exp_config(exp_file):
     exp_config.name = exp_name
     return exp_config
 
+def dict_to_json(dct, json_path): 
+    with open(json_path, 'w') as json_file:
+        json.dump(dct, json_file, indent=4)
+    return
+
+def json_to_dict(json_path):
+    with open(json_path, 'r') as file:
+        data = json.load(file)
+    return data

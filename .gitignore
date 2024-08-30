@@ -166,7 +166,9 @@ log/
 *.png
 *.csv
 *.pt
+*.json
 .vscode/
 *.mp4
 CelebV-HQ
 BeyondFID/data
+*.tar.gz

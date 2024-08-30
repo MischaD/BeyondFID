@@ -27,9 +27,9 @@ class ResNet18(torch.nn.Module):
     def __init__(self, *args, **kwargs):
         super(ResNet18, self).__init__()
         if kwargs['name'] == 'resnet18':
-            resnet = models.resnet18(pretrained=False)
+            resnet = models.resnet18()
         elif kwargs['name'] == 'resnet50':
-            resnet = models.resnet50(pretrained=False)
+            resnet = models.resnet50()
 
         self.encoder = torch.nn.Sequential(*list(resnet.children())[:-1])
         self.projetion = MLPHead(in_channels=resnet.fc.in_features, **kwargs['projection_head'])
@@ -56,7 +56,6 @@ class BYOL(BaseFeatureModel, nn.Module):
 
         if 'online_network_state_dict' in load_params:
             encoder.load_state_dict(load_params['online_network_state_dict'])
-            print("Parameters successfully loaded.")
         self.output_feature_dim = encoder.projetion.net[0].in_features
 
         # remove the projection head

@@ -24,9 +24,9 @@ def cleanup():
 def process(rank, world_size, basedir, file_list, model, fe_config, return_dict):
     setup(rank, world_size)
 
-    dataloader = get_distributed_dataloader(basedir, file_list, rank, world_size, batch_size=fe_config.batch_size, input_size=fe_config.input_size)
-    model = model.to(f"cuda:{rank}")
-
+    dataloader = get_distributed_dataloader(basedir, file_list, rank, world_size, batch_size=fe_config.batch_size)
+       
+    model = load_feature_model(fe_config).to(f"cuda:{rank}")
     latents = []
     indices_list = []
     model.eval()
@@ -80,8 +80,6 @@ def compute_features(config, pathreal, pathsynth, output_path):
         features_out_dir = os.path.join(output_path, feature_extractor_name)
         os.makedirs(features_out_dir, exist_ok=True)
 
-        model = load_feature_model(fe_config)
-
         basedir_real = os.path.dirname(pathreal) if not os.path.isdir(pathreal) else pathreal
         basedir_snth = os.path.dirname(pathsynth) if not os.path.isdir(pathsynth) else pathsynth 
         os.makedirs(basedir_real, exist_ok=True)
@@ -93,7 +91,7 @@ def compute_features(config, pathreal, pathsynth, output_path):
         if not os.path.exists(real_hash_path):
             logger.info(f"Computing real features for {feature_extractor_name} and saving to {real_hash_path}")
             # compute
-            real_latents = run_compute_features(model=model, basedir=basedir_real, file_list=real_file_list, fe_config=fe_config)
+            real_latents = run_compute_features(model=feature_extractor_name, basedir=basedir_real, file_list=real_file_list, fe_config=fe_config)
             # save tensor 
             torch.save(real_latents, real_hash_path)
             # save list as csv 
@@ -108,7 +106,7 @@ def compute_features(config, pathreal, pathsynth, output_path):
         if not os.path.exists(snth_hash_path):
             logger.info(f"Computing synthetic features for {feature_extractor_name} and saving to {snth_hash_path}")
             # compute
-            snth_latents = run_compute_features(model=model, basedir=basedir_snth, file_list=snth_file_list, fe_config=fe_config)
+            snth_latents = run_compute_features(model=feature_extractor_name, basedir=basedir_snth, file_list=snth_file_list, fe_config=fe_config)
             # save tensor 
             torch.save(snth_latents, snth_hash_path)
             # save list as csv 
@@ -116,5 +114,10 @@ def compute_features(config, pathreal, pathsynth, output_path):
         else: 
             logger.info(f"Precomputed feature tensor already found in: {snth_hash_path}")
             snth_latents = torch.load(snth_hash_path)
+
+    # returns only the hashpath of the saved tensor - fullpath is hashdata_{modelname}_<{real/snth}_hash_name>
+    real_hash_name = real_hash_name.split("_")[-1]
+    snth_hash_name = snth_hash_name.split("_")[-1]
+    return real_hash_name, snth_hash_name
 
 

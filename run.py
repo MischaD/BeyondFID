@@ -3,6 +3,8 @@ import argparse
 from log import logger
 from beyondfid.feature_computation import compute_features 
 from beyondfid.metrics.fid import compute_fid
+from beyondfid.metrics.inception_score import compute_is_score 
+from beyondfid.metrics import compute_authpct, compute_cttest, compute_fld, compute_kid, log_paths
 from beyondfid.config import config
 from beyondfid.metrics.prdc import compute_prdc
 
@@ -34,23 +36,42 @@ class UpdateConfigAction(argparse.Action):
 
 def main(args):
     # precompute features for all models and all data. They will be saved as tensors in output_path with the name being a hash
-    hashreal, hashsnth = compute_features(config, args.pathreal, args.pathsynth, args.output_path)
+    hashtrain, hashtest, hashsnth = compute_features(config, args.pathtrain, args.pathtest, args.pathsynth, args.output_path)
 
+    log_paths(args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
     # compute metrics, 
     if "fid" in args.metrics:
-        compute_fid(config, args.output_path, args.results_filename, hashreal, hashsnth)
+        compute_fid(config, args.output_path, args.results_filename, hashtrain, hashsnth, savekey="train")
+        compute_fid(config, args.output_path, args.results_filename, hashtest, hashsnth, savekey="test")
 
     if "prdc" in args.metrics:
-        compute_prdc(config, args.output_path, args.results_filename, hashreal, hashsnth)
+        compute_prdc(config, args.output_path, args.results_filename, hashtrain, hashsnth, savekey="train")
+        compute_prdc(config, args.output_path, args.results_filename, hashtest, hashsnth, savekey="test")
 
-    #, args.results_filename
+    if "authpct" in args.metrics:
+        compute_authpct(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
+
+    if "cttest" in args.metrics:
+        compute_cttest(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
+
+    if "fld" in args.metrics:
+        compute_fld(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
+
+    if "kid" in args.metrics:
+        compute_kid(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
+
+    if "is_score" in args.metrics:
+        compute_is_score(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
+
+
 
 
 def get_args():
     parser = argparse.ArgumentParser(description="BeyondFID CLI")
-    parser.add_argument("pathreal", type=str, help="data dir or csv with paths to data. Recursively looks through data dir")
-    parser.add_argument("pathsynth", type=str, help="data dir or csv with paths to synthetic data. Recursively looks through data dir")
-    parser.add_argument("--metrics", type=str, default="fid,prdc")
+    parser.add_argument("pathtrain", type=str, help="Train data dir or csv with paths to train data. Recursively looks through data dir")
+    parser.add_argument("pathtest", type=str, help="Test data dir or csv with paths to test data. Recursively looks through data dir")
+    parser.add_argument("pathsynth", type=str, help="Synth data dir or csv with paths to synthetic data. Recursively looks through data dir")
+    parser.add_argument("--metrics", type=str, default="fld,kid")
     parser.add_argument("--config", type=str, default="config.py", help="Configuration file. Defaults to config.py")
     parser.add_argument("--output_path", type=str, default="generative_metrics", help="Output path.")
     parser.add_argument("--results_filename", type=str, default="results.json", help="Name of file with results. Defaults to output_path/results.json")

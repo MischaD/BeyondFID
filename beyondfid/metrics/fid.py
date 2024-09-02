@@ -117,6 +117,7 @@ def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     fid = mean_term + var_term + cov_term
     return fid, mean_term, var_term, cov_term
 
+
 def calculate_activation_statistics(
     path
 ):
@@ -133,7 +134,7 @@ def calculate_fid_given_paths(real, snth):
     return fid, mean_term, var_term, cov_term
 
 
-def compute_fid(config, output_path, results_path, hashreal, hashsnth):
+def compute_fid(config, output_path, results_path, hashreal, hashsnth, savekey):
     logger.info(f"Saving results to {os.path.join(output_path, results_path)}")
 
     for model in config.metrics.fid.model.split(","):
@@ -148,17 +149,14 @@ def compute_fid(config, output_path, results_path, hashreal, hashsnth):
                 path_real, path_snth
             )
             results = {
-                        "fid":float(fid),
                         "mean_term": float(mean_term),
                         "var_term": float(var_term),
                         "cov_term": float(cov_term),
-                        "real": path_real, 
-                        "snth": path_snth,
                     }
+
+            save_metric(os.path.join(output_path, results_path), model=model, key=f"fid_{savekey}", value=float(fid))
+            save_metric(os.path.join(output_path, results_path), model=model, key=f"fid_components_{savekey}", value=results)        
 
         except ValueError:
             logger.warning(f"Imaginary component for fid computation and model {model}")
             results = {}
-
-        save_metric(os.path.join(output_path, results_path), key=f"fid_{model}", value=results)
-        

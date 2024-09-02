@@ -12,8 +12,10 @@ def hash_dataset_path(dataset_root_dir, img_list, descriptor=""):
     return os.path.join(dataset_root_dir, "hashdata_" + descriptor + "_" + name)
 
 
-def get_data_csv(path, fe_name, config=None):
+def get_data_csv(path, fe_name, config=None, split=None):
     data_csv = pd.read_csv(path)
+    if split is not None: 
+        data_csv = data_csv[data_csv["Split"]==split]
     file_list = list(data_csv["FileName"])
     output_filename = hash_dataset_path(os.path.dirname(path),img_list=file_list, descriptor=fe_name)
     return file_list, os.path.basename(output_filename)
@@ -60,11 +62,11 @@ def get_data_from_folder(path, fe_name, config=None):
     return file_list, os.path.basename(output_filename)
 
 
-def get_data(config, path, fe_name):
+def get_data(config, path, fe_name, split):
     """Returns list of files in path. Path can be csv or folder that will be searched recursively. 
     Also computes the hash for the output tensor.
     """
     if path.endswith(".csv"):
-        return get_data_csv(path, fe_name, config)
+        return get_data_csv(path, fe_name, config, split)
     else: 
         return get_data_from_folder(path, fe_name, config)

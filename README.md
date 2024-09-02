@@ -11,16 +11,18 @@ There are two potential ways to define datasets:
 
 1. CSV File:
     FileName, Split
-    TRAIN, VAL, TEST
+    path/to/file.png, {TRAIN, VAL, TEST}
 
 2. Folders:
-    a) Train/
+    a) <pathtotrain>/Train/
           *.png
-       Test/..
+       <pathtotest>/Test/..
           *.png
     b) ./*.png 
 
-    allowed file extensions are: png, jpg, pt, mp4, avi
+    allowed file extensions are: 
+        images: png, jpg, pt
+        videos: mp4, avi
 
 ## Rules for Video as input data
 

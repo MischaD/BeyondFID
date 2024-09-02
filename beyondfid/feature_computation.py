@@ -17,6 +17,7 @@ def setup(rank, world_size):
     os.environ['MASTER_PORT'] = '12355'
     torch.distributed.init_process_group("nccl", rank=rank, world_size=world_size)
 
+
 def cleanup():
     dist.destroy_process_group()
 
@@ -70,7 +71,28 @@ def run_compute_features(model, basedir, file_list, fe_config):
     return latents
 
 
-def compute_features(config, pathreal, pathsynth, output_path): 
+def precompute_features_from_path(config, fe_config, outdir, path, fe_name, split=None):
+    # path can be directory containing files or .csv
+    basedir = os.path.dirname(path) if not os.path.isdir(path) else path 
+    os.makedirs(basedir, exist_ok=True)
+
+    # check if real features already computed
+    file_list, hash_name = get_data(config, path, fe_name=fe_name, split=split)
+    hash_path = os.path.join(outdir, hash_name + ".pt")
+    if not os.path.exists(hash_path):
+        logger.info(f"Computing features for {fe_name} and saving to {hash_path}")
+        # compute
+        real_latents = run_compute_features(model=fe_name, basedir=basedir, file_list=file_list, fe_config=fe_config)
+        # save tensor 
+        torch.save(real_latents, hash_path)
+        # save list as csv 
+        pd.DataFrame({"FileName":file_list}).to_csv(hash_path.rstrip(".pt") + ".csv")
+    else: 
+        logger.info(f"Precomputed feature tensor already found in: {hash_path}")
+    return hash_path
+
+
+def compute_features(config, pathtrain, pathtest, pathsynth, output_path): 
     feature_extractor_names = config.feature_extractors.names.split(",")
 
     for feature_extractor_name in feature_extractor_names:
@@ -80,44 +102,17 @@ def compute_features(config, pathreal, pathsynth, output_path):
         features_out_dir = os.path.join(output_path, feature_extractor_name)
         os.makedirs(features_out_dir, exist_ok=True)
 
-        basedir_real = os.path.dirname(pathreal) if not os.path.isdir(pathreal) else pathreal
-        basedir_snth = os.path.dirname(pathsynth) if not os.path.isdir(pathsynth) else pathsynth 
-        os.makedirs(basedir_real, exist_ok=True)
-        os.makedirs(basedir_snth, exist_ok=True)
+        logger.info("Precomputing features of train data")
+        train_hash = precompute_features_from_path(config, fe_config, features_out_dir, pathtrain, feature_extractor_name, split="TRAIN")
 
-        # check if real features already computed
-        real_file_list, real_hash_name = get_data(config, pathreal, fe_name=feature_extractor_name)
-        real_hash_path = os.path.join(features_out_dir, real_hash_name + ".pt")
-        if not os.path.exists(real_hash_path):
-            logger.info(f"Computing real features for {feature_extractor_name} and saving to {real_hash_path}")
-            # compute
-            real_latents = run_compute_features(model=feature_extractor_name, basedir=basedir_real, file_list=real_file_list, fe_config=fe_config)
-            # save tensor 
-            torch.save(real_latents, real_hash_path)
-            # save list as csv 
-            pd.DataFrame({"FileName":real_file_list}).to_csv(real_hash_path.rstrip(".pt") + ".csv")
-        else: 
-            logger.info(f"Precomputed feature tensor already found in: {real_hash_path}")
-            real_latents = torch.load(real_hash_path)
+        logger.info("Precomputing features of test data")
+        test_hash = precompute_features_from_path(config, fe_config, features_out_dir, pathtest, feature_extractor_name, split="TEST")
 
-        # check if synthetic features already computed
-        snth_file_list, snth_hash_name = get_data(config, pathsynth, fe_name=feature_extractor_name)
-        snth_hash_path = os.path.join(features_out_dir, snth_hash_name + ".pt")
-        if not os.path.exists(snth_hash_path):
-            logger.info(f"Computing synthetic features for {feature_extractor_name} and saving to {snth_hash_path}")
-            # compute
-            snth_latents = run_compute_features(model=feature_extractor_name, basedir=basedir_snth, file_list=snth_file_list, fe_config=fe_config)
-            # save tensor 
-            torch.save(snth_latents, snth_hash_path)
-            # save list as csv 
-            pd.DataFrame({"FileName":snth_file_list}).to_csv(snth_hash_path.rstrip(".pt") + ".csv")
-        else: 
-            logger.info(f"Precomputed feature tensor already found in: {snth_hash_path}")
-            snth_latents = torch.load(snth_hash_path)
+        logger.info("Precomputing features of synth data")
+        snth_hash = precompute_features_from_path(config, fe_config, features_out_dir, pathsynth, feature_extractor_name)
 
     # returns only the hashpath of the saved tensor - fullpath is hashdata_{modelname}_<{real/snth}_hash_name>
-    real_hash_name = real_hash_name.split("_")[-1]
-    snth_hash_name = snth_hash_name.split("_")[-1]
-    return real_hash_name, snth_hash_name
-
-
+    train_hash = train_hash.split("_")[-1].rstrip(".pt")
+    test_hash = test_hash.split("_")[-1].rstrip(".pt")
+    snth_hash = snth_hash.split("_")[-1].rstrip(".pt")
+    return train_hash, test_hash, snth_hash

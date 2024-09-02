@@ -100,7 +100,7 @@ def _compute_prdc(real_features, fake_features, nearest_k):
     return dict(precision=precision, recall=recall,
                 density=density, coverage=coverage)
 
-def compute_prdc(config, output_path, results_path, hashreal, hashsnth):
+def compute_prdc(config, output_path, results_path, hashreal, hashsnth, savekey):
     logger.info(f"Saving results to {os.path.join(output_path, results_path)}")
 
     for model in config.metrics.fid.model.split(","):
@@ -112,8 +112,6 @@ def compute_prdc(config, output_path, results_path, hashreal, hashsnth):
         nearest_k = config.metrics.prdc.nearest_k
 
         prdc = _compute_prdc(real, snth, nearest_k=nearest_k)
-        prdc["real"]=path_real
-        prdc["snth"]=path_snth
-
-        save_metric(os.path.join(output_path, results_path), key=f"prdc_{model}", value=prdc)
-        
+        for key, value in prdc.items():
+            save_metric(os.path.join(output_path, results_path), model=model, key=f"{key}_{savekey}", value=value)
+    

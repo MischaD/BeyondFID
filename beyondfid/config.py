@@ -40,11 +40,28 @@ clip.batch_size = 256
 clip.config = ml_collections.ConfigDict() # pass to constructor here
 
 
+metric_models = "inception,byol,random,dinov2,clip"
 # config.metrics 
 config.metrics = metrics = ml_collections.ConfigDict()
 metrics.fid = fid = ml_collections.ConfigDict()
-fid.model = "inception,byol,random,dinov2,clip"
+fid.model = metric_models
 
 metrics.prdc = prdc = ml_collections.ConfigDict()
-prdc.model = "inception,byol,random,dinov2,clip"
+prdc.model = metric_models
 prdc.nearest_k = 1
+
+metrics.authpct = authpct = ml_collections.ConfigDict()
+authpct.model = metric_models
+
+metrics.cttest = cttest = ml_collections.ConfigDict()
+cttest.model = metric_models
+
+metrics.fld = fld = ml_collections.ConfigDict()
+fld.model = metric_models
+
+metrics.kid = kid = ml_collections.ConfigDict()
+kid.model = metric_models
+
+metrics.is_score = is_score = ml_collections.ConfigDict()
+#is_score.model = inception 
+is_score.splits = 10 

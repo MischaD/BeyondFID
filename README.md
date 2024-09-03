@@ -1,6 +1,19 @@
 # BeyondFID
 A python package to streamline evaluation of unconditional image generation models. 
+If you have a folder full of images or videos and want to compute image-wise generative metrics you are at the right place. 
+Supported metrics are:  TODO add references
 
+    - FID
+    - KID
+    - FLD
+    - AuthPCT
+    - CTTest
+    - Precision
+    - Recall
+    - Coverage 
+    - Density
+    - ReIDensity 
+    - Inception Score
 
 ## installation 
 

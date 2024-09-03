@@ -4,10 +4,13 @@ from torchvision import transforms as T
 
 config = ml_collections.ConfigDict()
 
+metric_models = "inception"#,byol,random,dinov2,clip"
+
+
 
 # feature extraction configs 
 config.feature_extractors = feature_extractors = ml_collections.ConfigDict()
-feature_extractors.names = "clip,dinov2,inception,byol,random"
+feature_extractors.names = metric_models 
 
 feature_extractors.byol = byol = ml_collections.ConfigDict()
 byol.name = "byol" # necessary for all feature extractors
@@ -39,8 +42,6 @@ clip.name = "clip"
 clip.batch_size = 256
 clip.config = ml_collections.ConfigDict() # pass to constructor here
 
-
-metric_models = "inception,byol,random,dinov2,clip"
 # config.metrics 
 config.metrics = metrics = ml_collections.ConfigDict()
 metrics.fid = fid = ml_collections.ConfigDict()

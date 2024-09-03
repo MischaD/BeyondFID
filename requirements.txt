@@ -1,3 +1,4 @@
 #xformers==0.0.18 # for Dinov2, can be left out to automatically be replaced by MLP 
 #conda install xformers -c xformers
 clip @ git+https://github.com/openai/CLIP.git
+av

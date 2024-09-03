@@ -28,7 +28,7 @@ class GenericDataset(Dataset):
     def __getitem__(self, idx):
         path = self.file_list[idx]
         file_ending = path.split(".")[-1]
-        if file_ending in ["mp4", "avc"] : 
+        if file_ending in ["mp4", "avi"] : 
             video = load_video_as_tensor(os.path.join(self.basedir, path))
             frame = first_frame(video)
         else:

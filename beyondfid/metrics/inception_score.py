@@ -16,40 +16,26 @@ def compute_is_score(config, output_path, results_path, hashtrain, hashtest, has
     inception.eval()
     def get_pred(x):
         x = inception.fc(x)
-        return F.softmax(x, dim=0).data.cpu().numpy()
+        return F.softmax(x, dim=0).data.cpu()
 
     splits = config.metrics.is_score.splits
 
     train, test, snth = path_to_tensor(output_path, "inception", hashtrain, hashtest, hashsnth)
     for ds, name in zip([train, test, snth], ["train", "test", "synth"]):
         # Get predictions
-        #preds = np.zeros((len(ds), inception.fc.out_features))
-        #batch_size = 1024
+        preds = torch.zeros((len(ds), inception.fc.out_features))
+        batch_size = 1024
 
-        #for i in np.arange(0, len(ds), step=batch_size):
-        #    batch = ds[i*batch_size:(i+1)*batch_size]
-        #    batch_size_i = len(batch) 
+        for i in torch.arange(0, len(ds), step=batch_size):
+            batch = ds[i*batch_size:(i+1)*batch_size]
+            batch_size_i = len(batch) 
 
-        #    preds[i*batch_size:i*batch_size + batch_size_i] = get_pred(batch)
-
-        ## Now compute the mean kl-div
-        #split_scores = []
-
-        #for k in range(splits):
-        #    part = preds[k * (len(ds) // splits): (k+1) * (len(ds) // splits), :]
-        #    py = np.mean(part, axis=0)
-        #    scores = []
-        #    for i in range(part.shape[0]):
-        #        pyx = part[i, :]
-        #        scores.append(entropy(pyx, py))
-        #    split_scores.append(np.exp(np.mean(scores)))
-
-        #mean, std = np.mean(split_scores), np.std(split_scores)
+            preds[i*batch_size:i*batch_size + batch_size_i] = get_pred(batch)
 
         # taken from: https://github.com/Lightning-AI/torchmetrics/blob/master/src/torchmetrics/image/inception.py
 
         idx = torch.randperm(ds.shape[0])
-        features = ds[idx]
+        features = preds[idx]
 
         # calculate probs and logits
         prob = features.softmax(dim=1)

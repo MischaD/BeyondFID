@@ -101,10 +101,8 @@ def _compute_prdc(real_features, fake_features, nearest_k):
                 density=density, coverage=coverage)
 
 def compute_prdc(config, output_path, results_path, hashreal, hashsnth, savekey):
-    logger.info(f"Saving results to {os.path.join(output_path, results_path)}")
 
     for model in config.metrics.fid.model.split(","):
-        logger.info(f"Computing prdc of {model}")
         path_real = os.path.join(output_path, model, f"hashdata_{model}_{hashreal}.pt")
         path_snth = os.path.join(output_path, model, f"hashdata_{model}_{hashsnth}.pt")
         real = torch.load(path_real)

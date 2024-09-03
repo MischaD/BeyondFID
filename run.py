@@ -39,28 +39,38 @@ def main(args):
     hashtrain, hashtest, hashsnth = compute_features(config, args.pathtrain, args.pathtest, args.pathsynth, args.output_path)
 
     log_paths(args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
+    logger.info(f"Computing metrics. Saving results to {os.path.join(args.output_path, args.results_filename)}")
     # compute metrics, 
     if "fid" in args.metrics:
+        logger.info("Computing FID train")
         compute_fid(config, args.output_path, args.results_filename, hashtrain, hashsnth, savekey="train")
+        logger.info("Computing FID test")
         compute_fid(config, args.output_path, args.results_filename, hashtest, hashsnth, savekey="test")
 
     if "prdc" in args.metrics:
+        logger.info("Computing PRDC train")
         compute_prdc(config, args.output_path, args.results_filename, hashtrain, hashsnth, savekey="train")
+        logger.info("Computing PRDC test")
         compute_prdc(config, args.output_path, args.results_filename, hashtest, hashsnth, savekey="test")
 
     if "authpct" in args.metrics:
+        logger.info("Computing AuthPCT")
         compute_authpct(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
 
     if "cttest" in args.metrics:
+        logger.info("Computing CTTest")
         compute_cttest(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
 
     if "fld" in args.metrics:
+        logger.info("Computing FLD")
         compute_fld(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
 
     if "kid" in args.metrics:
+        logger.info("Computing KID")
         compute_kid(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
 
     if "is_score" in args.metrics:
+        logger.info("Computing Inception Score")
         compute_is_score(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
 
 

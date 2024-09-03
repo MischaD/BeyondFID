@@ -135,8 +135,6 @@ def calculate_fid_given_paths(real, snth):
 
 
 def compute_fid(config, output_path, results_path, hashreal, hashsnth, savekey):
-    logger.info(f"Saving results to {os.path.join(output_path, results_path)}")
-
     for model in config.metrics.fid.model.split(","):
         path_real = os.path.join(output_path, model, f"hashdata_{model}_{hashreal}.pt")
         path_snth = os.path.join(output_path, model, f"hashdata_{model}_{hashsnth}.pt")
@@ -158,5 +156,5 @@ def compute_fid(config, output_path, results_path, hashreal, hashsnth, savekey):
             save_metric(os.path.join(output_path, results_path), model=model, key=f"fid_components_{savekey}", value=results)        
 
         except ValueError:
-            logger.warning(f"Imaginary component for fid computation and model {model}")
+            logger.warning(f"Imaginary component for fid_{savekey} computation and model {model}")
             results = {}

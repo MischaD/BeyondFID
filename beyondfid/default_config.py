@@ -64,5 +64,5 @@ metrics.kid = kid = ml_collections.ConfigDict()
 kid.model = metric_models
 
 metrics.is_score = is_score = ml_collections.ConfigDict()
-#is_score.model = inception 
+#is_score.model = inception  -- hardcoded right now 
 is_score.splits = 10 

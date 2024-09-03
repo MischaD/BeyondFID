@@ -2,7 +2,9 @@ import os
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import torchvision.io as io
+import torch
 from PIL import Image
+from beyondfid.log import logger
 
 
 def first_frame(x):
@@ -31,6 +33,14 @@ class GenericDataset(Dataset):
         if file_ending in ["mp4", "avi"] : 
             video = load_video_as_tensor(os.path.join(self.basedir, path))
             frame = first_frame(video)
+        elif file_ending == ".pt": 
+            tensor = torch.load(os.path.join(self.basedir, path))
+            if tensor.min() < 0 or tensor.max() > 1:
+                logger.warning(f"Tensor {os.path.join(self.basedir, path)} not 0-1 normalized.") 
+            if tensor.dim() == 4:
+                frame = first_frame(tensor)
+            else: 
+                frame = tensor
         else:
             # Load and normalize an image
             image_path = os.path.join(self.basedir, path)

@@ -2,7 +2,7 @@
 import torchvision.models as models
 import torch
 from torch import nn
-from . import BaseFeatureModel, register_feature_model
+from beyondfid.feature_extractor_models import BaseFeatureModel, register_feature_model
 import torch
 import yaml
 import os

@@ -1,12 +1,15 @@
 import os
 import argparse
+import ml_collections
+import importlib.util
 from beyondfid.log import logger
 from beyondfid.feature_computation import compute_features 
 from beyondfid.metrics.fid import compute_fid
 from beyondfid.metrics.inception_score import compute_is_score 
 from beyondfid.metrics import compute_authpct, compute_cttest, compute_fld, compute_kid, log_paths
-from beyondfid.config import config
+from beyondfid.default_config import config
 from beyondfid.metrics.prdc import compute_prdc
+from beyondfid.utils import json_to_dict
 
 
 class UpdateConfigAction(argparse.Action):
@@ -34,46 +37,85 @@ class UpdateConfigAction(argparse.Action):
             setattr(cfg, keys[-1], type(existing_value)(value))
 
 
-def main(args):
+def update_config(cfg, new_config):
+    """
+    Update the original configuration (cfg) with values from a new configuration file.
+
+    Args:
+        cfg (ml_collections.ConfigDict): The original configuration object.
+        config_path (str or ml_collections.ConfigDict): The path to the new configuration file or new config file.
+
+    Returns:
+        ml_collections.ConfigDict: The updated configuration object.
+    """
+    if isinstance(new_config, str):
+        # Load the new configuration from the provided path
+        spec = importlib.util.spec_from_file_location("new_config", new_config)
+        new_config_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(new_config_module)
+        
+        # Get the new configuration dictionary, excluding special attributes
+        new_config = {k: v for k, v in new_config_module.__dict__.items() if not k.startswith('__')}
+
+    def recursive_update(d, u):
+        """Recursively update a ConfigDict or dictionary."""
+        for k, v in u.items():
+            if isinstance(v, dict) or isinstance(v, ml_collections.ConfigDict):
+                d[k] = recursive_update(d.get(k, ml_collections.ConfigDict()), v)
+            else:
+                d[k] = v
+        return d
+    
+    # Update the original config with the new config
+    updated_config = recursive_update(cfg, new_config)
+
+    return updated_config
+
+
+def run(pathtrain, pathtest, pathsynth, metrics, output_path, results_filename, config):
     # precompute features for all models and all data. They will be saved as tensors in output_path with the name being a hash
-    hashtrain, hashtest, hashsnth = compute_features(config, args.pathtrain, args.pathtest, args.pathsynth, args.output_path)
+    if isinstance(metrics, str):
+        metrics = list(metrics.split(","))
 
-    log_paths(args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
-    logger.info(f"Computing metrics. Saving results to {os.path.join(args.output_path, args.results_filename)}")
+    hashtrain, hashtest, hashsnth = compute_features(config, pathtrain, pathtest, pathsynth, output_path)
+    res_path = os.path.join(output_path, results_filename)
+
+    log_paths(output_path, results_filename, hashtrain, hashtest, hashsnth)
+    logger.info(f"Computing metrics. Saving results to {res_path}")
     # compute metrics, 
-    if "fid" in args.metrics:
+    if "fid" in metrics:
         logger.info("Computing FID train")
-        compute_fid(config, args.output_path, args.results_filename, hashtrain, hashsnth, savekey="train")
+        compute_fid(config, output_path, results_filename, hashtrain, hashsnth, savekey="train")
         logger.info("Computing FID test")
-        compute_fid(config, args.output_path, args.results_filename, hashtest, hashsnth, savekey="test")
+        compute_fid(config, output_path, results_filename, hashtest, hashsnth, savekey="test")
 
-    if "prdc" in args.metrics:
+    if "prdc" in metrics:
         logger.info("Computing PRDC train")
-        compute_prdc(config, args.output_path, args.results_filename, hashtrain, hashsnth, savekey="train")
+        compute_prdc(config, output_path, results_filename, hashtrain, hashsnth, savekey="train")
         logger.info("Computing PRDC test")
-        compute_prdc(config, args.output_path, args.results_filename, hashtest, hashsnth, savekey="test")
+        compute_prdc(config, output_path, results_filename, hashtest, hashsnth, savekey="test")
 
-    if "authpct" in args.metrics:
+    if "authpct" in metrics:
         logger.info("Computing AuthPCT")
-        compute_authpct(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
+        compute_authpct(config, output_path, results_filename, hashtrain, hashtest, hashsnth)
 
-    if "cttest" in args.metrics:
+    if "cttest" in metrics:
         logger.info("Computing CTTest")
-        compute_cttest(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
+        compute_cttest(config, output_path, results_filename, hashtrain, hashtest, hashsnth)
 
-    if "fld" in args.metrics:
+    if "fld" in metrics:
         logger.info("Computing FLD")
-        compute_fld(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
+        compute_fld(config, output_path, results_filename, hashtrain, hashtest, hashsnth)
 
-    if "kid" in args.metrics:
+    if "kid" in metrics:
         logger.info("Computing KID")
-        compute_kid(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
+        compute_kid(config, output_path, results_filename, hashtrain, hashtest, hashsnth)
 
-    if "is_score" in args.metrics:
+    if "is_score" in metrics:
         logger.info("Computing Inception Score")
-        compute_is_score(config, args.output_path, args.results_filename, hashtrain, hashtest, hashsnth)
+        compute_is_score(config, output_path, results_filename, hashtrain, hashtest, hashsnth)
 
-
+    return json_to_dict(res_path)
 
 
 def get_args():
@@ -82,7 +124,7 @@ def get_args():
     parser.add_argument("pathtest", type=str, help="Test data dir or csv with paths to test data. Recursively looks through data dir")
     parser.add_argument("pathsynth", type=str, help="Synth data dir or csv with paths to synthetic data. Recursively looks through data dir")
     parser.add_argument("--metrics", type=str, default="fld,kid")
-    parser.add_argument("--config", type=str, default="config.py", help="Configuration file. Defaults to config.py")
+    parser.add_argument("--config", type=str, default="", help="Configuration file. Defaults all values to config.py. All values set here will be overwritten")
     parser.add_argument("--output_path", type=str, default="generative_metrics", help="Output path.")
     parser.add_argument("--results_filename", type=str, default="results.json", help="Name of file with results. Defaults to output_path/results.json")
 
@@ -91,7 +133,13 @@ def get_args():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+def main():
     args = get_args()
-    args.metrics = list(args.metrics.split(","))
-    main(args)
+    global config
+    if args.config != "": 
+        config = update_config(config, args.config)
+    run(args.pathtrain, args.pathtest, args.pathsynth, args.metrics, args.output_path, args.results_filename, config)
+
+
+if __name__ == "__main__":
+    main()

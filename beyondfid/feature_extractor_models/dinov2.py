@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 import torchvision.transforms as transforms
-from . import BaseFeatureModel, register_feature_model
+from beyondfid.feature_extractor_models import BaseFeatureModel, register_feature_model
 
 
 @register_feature_model(name="dinov2")

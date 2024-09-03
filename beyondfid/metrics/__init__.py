@@ -1,4 +1,4 @@
-from utils import json_to_dict, dict_to_json
+from beyondfid.utils import json_to_dict, dict_to_json
 from beyondfid.log import logger
 import torch
 import math

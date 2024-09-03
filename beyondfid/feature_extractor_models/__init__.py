@@ -1,6 +1,7 @@
 import inspect
 import sys
 from abc import ABC, abstractmethod
+from torch import nn
 
 
 _FEATURE_MODELS = {}
@@ -39,6 +40,16 @@ def load_feature_model(config):
     
     model_class = _FEATURE_MODELS[model_name]
     return model_class(config.config)
+
+
+@register_feature_model(name="generic")
+class GenericFeatureModel(BaseFeatureModel, nn.Module):
+    def __init__(self, model_config):
+        super().__init__()
+        self._compute_latent = model_config.forward
+
+    def compute_latent(self, x):
+        return self._compute_latent(x)
 
 
 # register modules

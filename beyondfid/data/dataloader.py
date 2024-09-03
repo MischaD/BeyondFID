@@ -1,6 +1,7 @@
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
-from .datasets import GenericDataset
+from beyondfid.data.datasets import GenericDataset
+
 
 def get_distributed_dataloader(basedir, filelist, rank, world_size, batch_size):
     dataset = GenericDataset(filelist, basedir)

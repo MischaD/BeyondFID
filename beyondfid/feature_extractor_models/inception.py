@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
-from . import BaseFeatureModel, register_feature_model
+from beyondfid.feature_extractor_models import BaseFeatureModel, register_feature_model
 
 try:
     from torchvision.models.utils import load_state_dict_from_url

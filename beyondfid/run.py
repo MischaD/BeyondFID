@@ -1,6 +1,6 @@
 import os
 import argparse
-from log import logger
+from beyondfid.log import logger
 from beyondfid.feature_computation import compute_features 
 from beyondfid.metrics.fid import compute_fid
 from beyondfid.metrics.inception_score import compute_is_score 

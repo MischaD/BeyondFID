@@ -9,7 +9,7 @@ MIT license
 import os
 import numpy as np
 import torch
-from log import logger
+from beyondfid.log import logger
 from beyondfid.metrics import save_metric
 import sklearn.metrics
 

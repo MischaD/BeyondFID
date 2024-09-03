@@ -17,7 +17,8 @@ Supported metrics are:  TODO add references
 
 ## installation 
 
-    pip install beyondfid
+    git clone git@github.com:MischaD/BeyondFID.git
+    pip install -e .
 
 ## Prepearation 
 There are two potential ways to define datasets:  

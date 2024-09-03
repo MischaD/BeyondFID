@@ -1,5 +1,5 @@
 from utils import json_to_dict, dict_to_json
-from log import logger
+from beyondfid.log import logger
 import torch
 import math
 import os

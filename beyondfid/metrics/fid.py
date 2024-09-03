@@ -36,7 +36,7 @@ limitations under the License.
 import os
 import pathlib
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
-from log import logger
+from beyondfid.log import logger
 
 import numpy as np
 import torch

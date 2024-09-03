@@ -8,7 +8,6 @@ import os
 import torch
 
 
-
 def compute_is_score(config, output_path, results_path, hashtrain, hashtest, hashsnth):
     # uses pytorch conversion of inceptionv3 which has 1008 outputs related to this issue https://github.com/mseitzer/pytorch-fid/issues/43
     # not recommended as evaluation metrics see 

@@ -3,13 +3,12 @@ import os
 import pandas as pd
 from beyondfid.feature_extractor_models import load_feature_model
 from beyondfid.data.dataloader import get_distributed_dataloader 
-from log import logger
+from beyondfid.log import logger
 import torch.multiprocessing as mp
 import torch
 import torch.distributed as dist
 from tqdm import tqdm
 import numpy as np
-from log import logger
 
 
 def setup(rank, world_size):

@@ -2,7 +2,7 @@ from importlib.machinery import SourceFileLoader
 from beyondfid.data import ALLOWED_EXTENSIONS
 import os
 import json
-from log import logger
+from beyondfid.log import logger
 
 def make_exp_config(exp_file):
     if exp_file.endswith(".json"): 

@@ -44,7 +44,7 @@ import torchvision.transforms as TF
 from PIL import Image
 from scipy import linalg
 from torch.nn.functional import adaptive_avg_pool2d
-from beyondfid.metrics import save_metric
+from beyondfid.metrics import save_metric, register_metric, BaseMetric
 
 try:
     from tqdm import tqdm
@@ -54,107 +54,105 @@ except ImportError:
         return x
 
 
-def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
-    """Numpy implementation of the Frechet Distance.
-    The Frechet distance between two multivariate Gaussians X_1 ~ N(mu_1, C_1)
-    and X_2 ~ N(mu_2, C_2) is
-            d^2 = ||mu_1 - mu_2||^2 + Tr(C_1 + C_2 - 2*sqrt(C_1*C_2)).
+@register_metric(name="fid")
+class FID(BaseMetric):
+    def __init__(self, config):
+        super().__init__(config)
 
-    Stable version by Dougal J. Sutherland.
+    def calculate_frechet_distance(self, mu1, sigma1, mu2, sigma2, eps=1e-6):
+        """Numpy implementation of the Frechet Distance.
+        The Frechet distance between two multivariate Gaussians X_1 ~ N(mu_1, C_1)
+        and X_2 ~ N(mu_2, C_2) is
+                d^2 = ||mu_1 - mu_2||^2 + Tr(C_1 + C_2 - 2*sqrt(C_1*C_2)).
 
-    Params:
-    -- mu1   : Numpy array containing the activations of a layer of the
-               inception net (like returned by the function 'get_predictions')
-               for generated samples.
-    -- mu2   : The sample mean over activations, precalculated on an
-               representative data set.
-    -- sigma1: The covariance matrix over activations for generated samples.
-    -- sigma2: The covariance matrix over activations, precalculated on an
-               representative data set.
+        Stable version by Dougal J. Sutherland.
 
-    Returns:
-    --   : The Frechet Distance.
-    """
+        Params:
+        -- mu1   : Numpy array containing the activations of a layer of the
+                inception net (like returned by the function 'get_predictions')
+                for generated samples.
+        -- mu2   : The sample mean over activations, precalculated on an
+                representative data set.
+        -- sigma1: The covariance matrix over activations for generated samples.
+        -- sigma2: The covariance matrix over activations, precalculated on an
+                representative data set.
 
-    mu1 = np.atleast_1d(mu1)
-    mu2 = np.atleast_1d(mu2)
+        Returns:
+        --   : The Frechet Distance.
+        """
 
-    sigma1 = np.atleast_2d(sigma1)
-    sigma2 = np.atleast_2d(sigma2)
+        mu1 = np.atleast_1d(mu1)
+        mu2 = np.atleast_1d(mu2)
 
-    assert (
-        mu1.shape == mu2.shape
-    ), "Training and test mean vectors have different lengths"
-    assert (
-        sigma1.shape == sigma2.shape
-    ), "Training and test covariances have different dimensions"
+        sigma1 = np.atleast_2d(sigma1)
+        sigma2 = np.atleast_2d(sigma2)
 
-    diff = mu1 - mu2
+        assert (
+            mu1.shape == mu2.shape
+        ), "Training and test mean vectors have different lengths"
+        assert (
+            sigma1.shape == sigma2.shape
+        ), "Training and test covariances have different dimensions"
 
-    # Product might be almost singular
-    covmean, _ = linalg.sqrtm(sigma1.dot(sigma2), disp=False)
-    if not np.isfinite(covmean).all():
-        msg = (
-            "fid calculation produces singular product; "
-            "adding %s to diagonal of cov estimates"
-        ) % eps
-        print(msg)
-        offset = np.eye(sigma1.shape[0]) * eps
-        covmean = linalg.sqrtm((sigma1 + offset).dot(sigma2 + offset))
+        diff = mu1 - mu2
 
-    # Numerical error might give slight imaginary component
-    if np.iscomplexobj(covmean):
-        if not np.allclose(np.diagonal(covmean).imag, 0, atol=1e-3):
-            m = np.max(np.abs(covmean.imag))
-            raise ValueError("Imaginary component {}".format(m))
-        covmean = covmean.real
+        # Product might be almost singular
+        covmean, _ = linalg.sqrtm(sigma1.dot(sigma2), disp=False)
+        if not np.isfinite(covmean).all():
+            msg = (
+                "fid calculation produces singular product; "
+                "adding %s to diagonal of cov estimates"
+            ) % eps
+            print(msg)
+            offset = np.eye(sigma1.shape[0]) * eps
+            covmean = linalg.sqrtm((sigma1 + offset).dot(sigma2 + offset))
 
-    tr_covmean = np.trace(covmean)
+        # Numerical error might give slight imaginary component
+        if np.iscomplexobj(covmean):
+            if not np.allclose(np.diagonal(covmean).imag, 0, atol=1e-3):
+                m = np.max(np.abs(covmean.imag))
+                raise ValueError("Imaginary component {}".format(m))
+            covmean = covmean.real
 
-    mean_term = diff.dot(diff)
-    var_term = np.trace(sigma1) + np.trace(sigma2) 
-    cov_term = - 2 * tr_covmean
-    fid = mean_term + var_term + cov_term
-    return fid, mean_term, var_term, cov_term
+        tr_covmean = np.trace(covmean)
 
+        mean_term = diff.dot(diff)
+        var_term = np.trace(sigma1) + np.trace(sigma2) 
+        cov_term = - 2 * tr_covmean
+        fid = mean_term + var_term + cov_term
+        return fid, mean_term, var_term, cov_term
 
-def calculate_activation_statistics(
-    path
-):
-    act = torch.load(path).numpy()
-    mu = np.mean(act, axis=0)
-    sigma = np.cov(act, rowvar=False)
-    return mu, sigma
+    def calculate_activation_statistics(
+        self, act 
+    ):
+        mu = np.mean(act, axis=0)
+        sigma = np.cov(act, rowvar=False)
+        return mu, sigma
 
-
-def calculate_fid_given_paths(real, snth):
-    m1, s1 = calculate_activation_statistics(real)
-    m2, s2 = calculate_activation_statistics(snth)
-    fid, mean_term, var_term, cov_term = calculate_frechet_distance(m1, s1, m2, s2)
-    return fid, mean_term, var_term, cov_term
-
-
-def compute_fid(config, output_path, results_path, hashreal, hashsnth, savekey):
-    for model in config.metrics.fid.model.split(","):
-        path_real = os.path.join(output_path, model, f"hashdata_{model}_{hashreal}.pt")
-        path_snth = os.path.join(output_path, model, f"hashdata_{model}_{hashsnth}.pt")
-        
-        # load path
-        # compute fid 
-        # save fid results
+    def _compute(self, real, snth):
         try: 
-            fid, mean_term, var_term, cov_term = calculate_fid_given_paths(
-                path_real, path_snth
-            )
-            results = {
-                        "mean_term": float(mean_term),
-                        "var_term": float(var_term),
-                        "cov_term": float(cov_term),
-                    }
+            m1, s1 = self.calculate_activation_statistics(real.numpy())
+            m2, s2 = self.calculate_activation_statistics(snth.numpy())
+            fid, mean_term, var_term, cov_term = self.calculate_frechet_distance(m1, s1, m2, s2)
+            return {"fid":fid, "mean":mean_term, "var":var_term, "cov":cov_term}
+        except ValueError as e: 
+            logger.warning(f"FID computation failed due to {e}")
+            logger.warning("Setting FID to -1")
+            return {"fid":-1}
 
-            save_metric(os.path.join(output_path, results_path), model=model, key=f"fid_{savekey}", value=float(fid))
-            save_metric(os.path.join(output_path, results_path), model=model, key=f"fid_components_{savekey}", value=results)        
 
-        except ValueError:
-            logger.warning(f"Imaginary component for fid_{savekey} computation and model {model}")
-            results = {}
+    def compute(self, train_features, test_features, snth_features):
+        fid_train = self._compute(train_features, snth_features)
+        fid_test = self._compute(test_features, snth_features)
+        return {"fid_train": fid_train, "fid_test": fid_test}
+
+    def compute_from_path(self, output_path, hashtrain, hashtest, hashsnth, results_path=None):
+        results = {}
+        for model in self.models:
+            train, test, snth = self.path_to_tensor(output_path, model, hashtrain, hashtest, hashsnth)
+            fid = self.compute(train, test, snth)
+            results[model] = fid
+
+            if results_path is not None: 
+                for key, value in fid.items():
+                    save_metric(os.path.join(output_path, results_path), model=model, key=f"{key}", value=value)

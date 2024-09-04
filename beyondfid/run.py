@@ -4,11 +4,8 @@ import ml_collections
 import importlib.util
 from beyondfid.log import logger
 from beyondfid.feature_computation import compute_features 
-from beyondfid.metrics.fid import compute_fid
-from beyondfid.metrics.inception_score import compute_is_score 
-from beyondfid.metrics import compute_authpct, compute_cttest, compute_fld, compute_kid, log_paths
+from beyondfid.metrics import log_paths, load_metric
 from beyondfid.default_config import config
-from beyondfid.metrics.prdc import compute_prdc
 from beyondfid.utils import json_to_dict
 
 
@@ -80,40 +77,15 @@ def run(pathtrain, pathtest, pathsynth, metrics, output_path, results_filename, 
     hashtrain, hashtest, hashsnth = compute_features(config, pathtrain, pathtest, pathsynth, output_path)
     res_path = os.path.join(output_path, results_filename)
 
-    log_paths(output_path, results_filename, hashtrain, hashtest, hashsnth)
     logger.info(f"Computing metrics. Saving results to {res_path}")
-    # compute metrics, 
-    if "fid" in metrics:
-        logger.info("Computing FID train")
-        compute_fid(config, output_path, results_filename, hashtrain, hashsnth, savekey="train")
-        logger.info("Computing FID test")
-        compute_fid(config, output_path, results_filename, hashtest, hashsnth, savekey="test")
+    # log hash paths to results file
+    log_paths(output_path, results_filename, hashtrain, hashtest, hashsnth)
 
-    if "prdc" in metrics:
-        logger.info("Computing PRDC train")
-        compute_prdc(config, output_path, results_filename, hashtrain, hashsnth, savekey="train")
-        logger.info("Computing PRDC test")
-        compute_prdc(config, output_path, results_filename, hashtest, hashsnth, savekey="test")
-
-    if "authpct" in metrics:
-        logger.info("Computing AuthPCT")
-        compute_authpct(config, output_path, results_filename, hashtrain, hashtest, hashsnth)
-
-    if "cttest" in metrics:
-        logger.info("Computing CTTest")
-        compute_cttest(config, output_path, results_filename, hashtrain, hashtest, hashsnth)
-
-    if "fld" in metrics:
-        logger.info("Computing FLD")
-        compute_fld(config, output_path, results_filename, hashtrain, hashtest, hashsnth)
-
-    if "kid" in metrics:
-        logger.info("Computing KID")
-        compute_kid(config, output_path, results_filename, hashtrain, hashtest, hashsnth)
-
-    if "is_score" in metrics:
-        logger.info("Computing Inception Score")
-        compute_is_score(config, output_path, results_filename, hashtrain, hashtest, hashsnth)
+    for metric_name in metrics: 
+        logger.info(f"Computing {metric_name}")
+        config_metric = config.metrics.get(metric_name)
+        metric = load_metric(metric_name, config_metric) 
+        metric.compute_from_path(output_path, hashtrain, hashtest, hashsnth, results_path=results_filename)
 
     return json_to_dict(res_path)
 
@@ -123,7 +95,7 @@ def get_args():
     parser.add_argument("pathtrain", type=str, help="Train data dir or csv with paths to train data. Recursively looks through data dir")
     parser.add_argument("pathtest", type=str, help="Test data dir or csv with paths to test data. Recursively looks through data dir")
     parser.add_argument("pathsynth", type=str, help="Synth data dir or csv with paths to synthetic data. Recursively looks through data dir")
-    parser.add_argument("--metrics", type=str, default="fld,kid")
+    parser.add_argument("--metrics", type=str, default="prdc,fid,is_score,cttest,authpct,fld,kid")
     parser.add_argument("--config", type=str, default="", help="Configuration file. Defaults all values to config.py. All values set here will be overwritten")
     parser.add_argument("--output_path", type=str, default="generative_metrics", help="Output path.")
     parser.add_argument("--results_filename", type=str, default="results.json", help="Name of file with results. Defaults to output_path/results.json")

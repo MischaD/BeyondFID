@@ -75,18 +75,35 @@ As CLI
 
 or within python 
 
-    from beyondfid.default_config import config 
-    from beyondfid.run import run
+```python
+from beyondfid.default_config import config 
+from beyondfid.utils import update_config
+from beyondfid.run import run
 
-    metrics="fid,is_score,kid" # decide what metrics you want to compute 
+# decide what features to extract, run beyondfid -h for a full list, can be custom (see below)
+feature_extractors="inception,dinov2" 
 
-    config.feature_extractors.names="inception,dinov2" # decide what features to extract
-    config.metrics.fid.model="inception,dinov2" # decide on what features you want to compute FID  
-    results = run("path/to/train", "path/to/train", "path/to/synth", metrics, "out/path", "results.json", config)
-    
-    print(results["dinov2"]["fid_train"]) # fid with dino features between synthetic and train dataset
-    print(results["inception"]["fid_train"])
+ # decide what metrics you want to compute, run beyonfid -h for a full list
+metrics ="fid,is_score,kid,prdc"
 
+# update the config
+config = update_config(config, metrics=metrics, feature_extractors=feature_extractors) 
+
+# manually set hyperparameters if necessary - full list is in beyondfid.default_config.py
+config.metrics.prdc.nearest_k = 3
+
+# path/to/synth can also be a generator function (see below)
+results = run("path/to/train", "path/to/train", "path/to/synth", "out/path", "results.json", config) 
+# results will also be saved to "out/path/results.json", all features as tensors to out/path/<model>/*.pt
+
+print(results["dinov2"]["fid_train"]) # fid with dino features between synthetic and train dataset
+```
+
+# Advanced Usage
+- You do not want to save the generated images on disc? 
+- You want to evalute your own feature extraction method? 
+
+Then see below! 
 
 
 ## Requirements 
@@ -99,7 +116,6 @@ This work is based on the work of the following repositories and would not have 
 - https://github.com/clovaai/generative-evaluation-prdc
 - https://github.com/marcojira/fld
 - https://github.com/mseitzer/pytorch-fid
-
 
 # How to add a new feature extraction model: 
 
@@ -186,3 +202,25 @@ In a world of infinite feature extractors, where different runs can already have
     ```
 
 clip.config will be parsed as model_config to the constructor of the CLIP class if you want to test different settings.
+
+
+# How to use a generator function instead of saving the models on disk
+
+This package was optimized to compute multiple metrics at once, which means we need to save all generated images in memory. 
+This can get memory heavy. 50000 three channel images of size 512x512 take up 147 GB of memory. Make sure you have that available. If not, consider saving images on disk instead. 
+
+```python 
+    from beyondfid.default_config import config 
+    from beyondfid.utils import update_config
+    from beyondfid.run import run 
+    import torch # only for torch.zeros
+
+    test_images = {"file_key_test":torch.zeros((100, 3, 512, 512))} # key will be used to save features as tensor
+    generated_images = {"file_key_gen":torch.zeros((100, 3, 512, 512))} 
+
+    # update config with metrics you want to compute
+    config = update_config(config, metrics="fid", feature_extractors="inception,dinov2") 
+
+    results = run("path/to/train", test_images, generated_images, results_filename="results.json", output_path="./.cache/", config=config)
+    print(results)
+```

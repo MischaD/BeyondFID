@@ -30,3 +30,10 @@ def json_to_dict(json_path):
     with open(json_path, 'r') as file:
         data = json.load(file)
     return data
+
+def update_config(config, feature_extractors:str, metrics:str): 
+    config.metric_list = metrics
+    config.feature_extractors.names = feature_extractors
+    for metric in config.metrics.keys(): 
+        getattr(config.metrics, metric).models = feature_extractors
+    return config

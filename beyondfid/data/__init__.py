@@ -68,6 +68,11 @@ def get_data(config, path, fe_name, split):
     """Returns list of files in path. Path can be csv or folder that will be searched recursively. 
     Also computes the hash for the output tensor.
     """
+    if isinstance(path, dict): 
+        # path is dict containing a list of images already loaded. 
+        file_key, img_list = next(iter(path.items()))
+        return img_list, "hashdata_" + fe_name + "_" + f"{file_key}" 
+
     if path.endswith(".csv"):
         return get_data_csv(path, fe_name, config, split)
     else: 

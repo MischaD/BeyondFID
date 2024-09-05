@@ -21,6 +21,7 @@ def load_video_as_tensor(video_path):
 
 class GenericDataset(Dataset):
     def __init__(self, file_list, basedir):
+        super().__init__()
         self.basedir = basedir
         self.file_list = file_list
 
@@ -49,3 +50,15 @@ class GenericDataset(Dataset):
 
         return frame, idx, path  # Return index to maintain order
 
+
+class TensorDataset(Dataset): 
+    """Use a tensor instead of a filelist"""
+    def __init__(self, img_list):
+        super().__init__()
+        self.images = img_list
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, idx):
+        return self.images[idx], idx, ""  # path is ""

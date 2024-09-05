@@ -5,16 +5,18 @@ from beyondfid.data.dataloader import get_distributed_dataloader, get_dataloader
 from beyondfid.data import get_data 
 import torch.multiprocessing as mp
 import torch
+import socket
 import torch.distributed as dist
 from tqdm import tqdm
 import numpy as np
 from beyondfid.log import logger
 
-
 def setup(rank, world_size):
+    # Set master address (localhost in this case)
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '12355'
-    torch.distributed.init_process_group("nccl", rank=rank, world_size=world_size)
+
+    dist.init_process_group(backend="nccl", rank=rank, world_size=world_size)
 
 
 def cleanup():
@@ -94,8 +96,13 @@ def run_compute_features_single_gpu(model, basedir, file_list, fe_config):
 
 def precompute_features_from_path(config, fe_config, outdir, path, fe_name, split=None):
     # path can be directory containing files or .csv
-    basedir = os.path.dirname(path) if not os.path.isdir(path) else path 
-    os.makedirs(basedir, exist_ok=True)
+    if isinstance(path, str):
+        file_list_are_paths = True
+        basedir = os.path.dirname(path) if not os.path.isdir(path) else path 
+    else: 
+        file_list_are_paths = False 
+        basedir = None
+    #os.makedirs(basedir, exist_ok=True)
 
     # check if real features already computed
     file_list, hash_name = get_data(config, path, fe_name=fe_name, split=split)
@@ -113,7 +120,8 @@ def precompute_features_from_path(config, fe_config, outdir, path, fe_name, spli
         # save tensor 
         torch.save(real_latents, hash_path)
         # save list as csv 
-        pd.DataFrame({"FileName":file_list}).to_csv(hash_path.rstrip(".pt") + ".csv")
+        if file_list_are_paths:
+            pd.DataFrame({"FileName":file_list}).to_csv(hash_path.rstrip(".pt") + ".csv")
     else: 
         logger.info(f"Precomputed feature tensor already found in: {hash_path}")
     return hash_path
@@ -139,7 +147,7 @@ def compute_features(config, pathtrain, pathtest, pathsynth, output_path):
         snth_hash = precompute_features_from_path(config, fe_config, features_out_dir, pathsynth, feature_extractor_name)
 
     # returns only the hashpath of the saved tensor - fullpath is hashdata_{modelname}_<{real/snth}_hash_name>
-    train_hash = train_hash.split("_")[-1].rstrip(".pt")
-    test_hash = test_hash.split("_")[-1].rstrip(".pt")
-    snth_hash = snth_hash.split("_")[-1].rstrip(".pt")
+    train_hash = "_".join(train_hash.split("_")[2:])[:-3]
+    test_hash = "_".join(test_hash.split("_")[2:])[:-3]
+    snth_hash = "_".join(snth_hash.split("_")[2:])[:-3]
     return train_hash, test_hash, snth_hash

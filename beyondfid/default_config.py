@@ -4,13 +4,12 @@ from torchvision import transforms as T
 
 config = ml_collections.ConfigDict()
 
-metric_models = "inception"#,byol,random,dinov2,clip"
-
-
+feature_models = "inception,byol"#,byol,random,dinov2,clip" # all of these features will be computed
+config.metric_list = "prdc,fid,is_score,cttest,authpct,fld,kid"
 
 # feature extraction configs 
 config.feature_extractors = feature_extractors = ml_collections.ConfigDict()
-feature_extractors.names = metric_models 
+feature_extractors.names = feature_models 
 
 feature_extractors.byol = byol = ml_collections.ConfigDict()
 byol.name = "byol" # necessary for all feature extractors
@@ -45,23 +44,23 @@ clip.config = ml_collections.ConfigDict() # pass to constructor here
 # config.metrics 
 config.metrics = metrics = ml_collections.ConfigDict()
 metrics.fid = fid = ml_collections.ConfigDict()
-fid.models = metric_models
+fid.models = feature_models
 
 metrics.prdc = prdc = ml_collections.ConfigDict()
-prdc.models = metric_models
+prdc.models = feature_models
 prdc.nearest_k = 1
 
 metrics.authpct = authpct = ml_collections.ConfigDict()
-authpct.models = metric_models
+authpct.models = feature_models
 
 metrics.cttest = cttest = ml_collections.ConfigDict()
-cttest.models = metric_models
+cttest.models = feature_models
 
 metrics.fld = fld = ml_collections.ConfigDict()
-fld.models = metric_models
+fld.models = feature_models
 
 metrics.kid = kid = ml_collections.ConfigDict()
-kid.models = metric_models
+kid.models = feature_models
 
 metrics.is_score = is_score = ml_collections.ConfigDict()
 is_score.models = "inception" # -- hardcoded right now 

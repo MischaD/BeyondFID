@@ -33,15 +33,6 @@ def register_feature_model(cls=None, *, name=None):
         return _register(cls)
 
 
-def load_feature_model(config):
-    model_name = config.name
-    if model_name not in _FEATURE_MODELS:
-        raise ValueError(f"No model found with name {model_name}")
-    
-    model_class = _FEATURE_MODELS[model_name]
-    return model_class(config.config)
-
-
 @register_feature_model(name="generic")
 class GenericFeatureModel(BaseFeatureModel, nn.Module):
     def __init__(self, model_config):
@@ -50,6 +41,15 @@ class GenericFeatureModel(BaseFeatureModel, nn.Module):
 
     def compute_latent(self, x):
         return self._compute_latent(x)
+
+
+def load_feature_model(config):
+    model_name = config.name
+    if model_name not in _FEATURE_MODELS:
+        raise ValueError(f"No model found with name {model_name}")
+    
+    model_class = _FEATURE_MODELS[model_name]
+    return model_class(config.config)
 
 
 # register modules

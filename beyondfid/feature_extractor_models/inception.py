@@ -233,7 +233,7 @@ class InceptionV3(BaseFeatureModel, nn.Module):
             inception = fid_inception_v3()
         else:
             inception = _inception_v3(weights="DEFAULT")
-
+        
         # Block 0: input to maxpool1
         block0 = [
             inception.Conv2d_1a_3x3,

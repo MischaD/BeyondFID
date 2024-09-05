@@ -4,7 +4,8 @@ import ml_collections
 import importlib.util
 from beyondfid.log import logger
 from beyondfid.feature_computation import compute_features 
-from beyondfid.metrics import log_paths, load_metric
+from beyondfid.feature_extractor_models import _FEATURE_MODELS
+from beyondfid.metrics import log_paths, load_metric, _METRICS
 from beyondfid.default_config import config
 from beyondfid.utils import json_to_dict
 
@@ -69,8 +70,36 @@ def update_config(cfg, new_config):
     return updated_config
 
 
-def run(pathtrain, pathtest, pathsynth, metrics, output_path, results_filename, config):
+def run_generic(pathtrain, pathtest, pathsynth, forward_function, config, output_path, batch_size=256):
+    # helper function to run generic models only defined by a forward function. 
+    config.feature_extractors.names = "generic"
+    config.feature_extractors.generic = ml_collections.ConfigDict()
+
+    # load_feature_model(fe_config) will be called in feature_computation.process - fe_config == config.feature_extractors.generic.config 
+    config.feature_extractors.generic.batch_size = batch_size # necessary for all feature extractors
+    config.feature_extractors.generic.name = "generic" # necessary for all feature extractors
+    config.feature_extractors.generic.config = ml_collections.ConfigDict()
+    config.feature_extractors.generic.config.forward = forward_function
+
+    metrics = config.metric_list
+    if isinstance(metrics, str):
+        metrics = list(metrics.split(","))
+
+    hashtrain, hashtest, hashsnth = compute_features(config, pathtrain, pathtest, pathsynth, output_path)
+
+    results = {}
+    for metric_name in metrics: 
+        logger.info(f"Computing {metric_name}")
+        config_metric = config.metrics.get(metric_name)
+        config_metric.models = "generic" # overwrite to 
+        metric = load_metric(metric_name, config_metric) 
+        results[metric_name] = metric.compute_from_path(output_path, hashtrain, hashtest, hashsnth, results_path=None)
+    return results 
+
+
+def run(pathtrain, pathtest, pathsynth, output_path, results_filename, config):
     # precompute features for all models and all data. They will be saved as tensors in output_path with the name being a hash
+    metrics = config.metric_list
     if isinstance(metrics, str):
         metrics = list(metrics.split(","))
 
@@ -95,10 +124,13 @@ def get_args():
     parser.add_argument("pathtrain", type=str, help="Train data dir or csv with paths to train data. Recursively looks through data dir")
     parser.add_argument("pathtest", type=str, help="Test data dir or csv with paths to test data. Recursively looks through data dir")
     parser.add_argument("pathsynth", type=str, help="Synth data dir or csv with paths to synthetic data. Recursively looks through data dir")
-    parser.add_argument("--metrics", type=str, default="prdc,fid,is_score,cttest,authpct,fld,kid")
+
+    parser.add_argument("--feature_extractors", type=str, nargs="+", default=[], help="What feature extractors to use. Leave empty to compute all available features.", choices=_FEATURE_MODELS.keys())
+    parser.add_argument("--metrics", type=str, nargs="+", default=[], help="What metrics to use. Leave empty to compute all available metrics.", choices=_METRICS.keys())
+
     parser.add_argument("--config", type=str, default="", help="Configuration file. Defaults all values to config.py. All values set here will be overwritten")
-    parser.add_argument("--output_path", type=str, default="generative_metrics", help="Output path.")
-    parser.add_argument("--results_filename", type=str, default="results.json", help="Name of file with results. Defaults to output_path/results.json")
+    parser.add_argument("--output_path", type=str, default="beyondfid", help="Output path to save feature tensors and results.")
+    parser.add_argument("--results_filename", type=str, default="results.json", help="Name of file with results. Defaults to <output_path>/results.json")
 
     # Add an argument for dynamic config updates
     parser.add_argument('--config-update', action=UpdateConfigAction, nargs='+', help="Update config parameters, e.g., --config-update=config.feature_extractors.byol.batch_size=16")
@@ -110,7 +142,14 @@ def main():
     global config
     if args.config != "": 
         config = update_config(config, args.config)
-    run(args.pathtrain, args.pathtest, args.pathsynth, args.metrics, args.output_path, args.results_filename, config)
+    if args.metrics != []: 
+        config.metric_list = ",".join(args.metrics)
+    if args.feature_extractors != []: 
+        config.feature_extractors.names = ",".join(args.feature_extractors)
+        logger.info(f"Overwriting models setting for all metrics and setting it to {config.feature_extractors.names}")
+        for metric in _METRICS.keys():
+            getattr(config.metrics, metric).models =  config.feature_extractors.names
+    run(args.pathtrain, args.pathtest, args.pathsynth, args.output_path, args.results_filename, config)
 
 
 if __name__ == "__main__":

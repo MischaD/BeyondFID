@@ -1,6 +1,7 @@
 import hashlib
 import os
 import pandas as pd
+from beyondfid.log import logger
 
 ALLOWED_EXTENSIONS = ('.png', '.jpg', '.pt', '.mp4', '.avi')
 
@@ -59,6 +60,7 @@ def get_data_from_folder(path, fe_name, config=None):
                 file_list.append(relative_path)
     
     output_filename = hash_dataset_path(os.path.dirname(path),img_list=file_list, descriptor=fe_name)
+    logger.info(f"{len(file_list)} files found for path {path}")
     return file_list, os.path.basename(output_filename)
 
 

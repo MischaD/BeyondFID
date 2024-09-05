@@ -134,7 +134,7 @@ class FID(BaseMetric):
             m1, s1 = self.calculate_activation_statistics(real.numpy())
             m2, s2 = self.calculate_activation_statistics(snth.numpy())
             fid, mean_term, var_term, cov_term = self.calculate_frechet_distance(m1, s1, m2, s2)
-            return {"fid":fid, "mean":mean_term, "var":var_term, "cov":cov_term}
+            return {"fid":float(fid), "mean":float(mean_term), "var":float(var_term), "cov":float(cov_term)}
         except ValueError as e: 
             logger.warning(f"FID computation failed due to {e}")
             logger.warning("Setting FID to -1")

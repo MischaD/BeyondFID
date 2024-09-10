@@ -36,6 +36,29 @@ dinov2.name = "dinov2"
 dinov2.batch_size = 256
 dinov2.config = ml_collections.ConfigDict() # pass to constructor here
 
+feature_extractors.convnext = convnext = ml_collections.ConfigDict()
+convnext.name = "convnext"
+convnext.batch_size = 256
+convnext.config = ml_collections.ConfigDict() # pass to constructor here
+convnext.config.arch = "convnext_xlarge.fb_in22k"
+
+feature_extractors.mae = mae = ml_collections.ConfigDict()
+mae.name = "mae"
+mae.batch_size = 16 
+mae.config = ml_collections.ConfigDict() # pass to constructor here
+mae.config.checkpoint = "https://dl.fbaipublicfiles.com/mae/pretrain/mae_pretrain_vit_large.pth"
+
+feature_extractors.data2vec = data2vec = ml_collections.ConfigDict()
+data2vec.name = "data2vec"
+data2vec.batch_size = 16 
+data2vec.config = ml_collections.ConfigDict() # pass to constructor here
+data2vec.config.checkpoint = "facebook/data2vec-vision-large"
+
+feature_extractors.swav = swav = ml_collections.ConfigDict()
+swav.name = "swav"
+swav.batch_size = 128
+swav.config = ml_collections.ConfigDict() # pass to constructor here
+
 feature_extractors.clip = clip = ml_collections.ConfigDict()
 clip.name = "clip"
 clip.batch_size = 256

@@ -8,10 +8,8 @@ Supported metrics are:
 - [FLD](https://arxiv.org/abs/2302.04440)
 - [AuthPCT](https://proceedings.mlr.press/v162/alaa22a/alaa22a.pdf)
 - [CTTest](http://arxiv.org/abs/2004.05675)
-- [Precision](https://arxiv.org/abs/1806.00035)
-- [Recall](https://arxiv.org/abs/1806.00035)
-- [Coverage](https://arxiv.org/abs/2002.09797) 
-- [Density](https://arxiv.org/abs/2002.09797)
+- [Precision, Recall](https://arxiv.org/abs/1806.00035)
+- [Coverage, Density](https://arxiv.org/abs/2002.09797) 
 - [Inception Score](https://proceedings.neurips.cc/paper_files/paper/2016/hash/8a3363abe792db2d8761d6403605aeb7-Abstract.html)
 
 ## installation 
@@ -20,7 +18,7 @@ Supported metrics are:
     pip install -e .
 
 ## Preparation 
-There are two potential ways to define datasets:  
+There are three potential ways to define datasets:  
 
 1. **Folders:**
 
@@ -50,6 +48,10 @@ There are two potential ways to define datasets:
    | l2/example_001.png  | TRAIN        |
 
     For example if you have **./data/FileList.csv** as argument for pathtrain then it expects the image to be in ./data/l1/example_000.png
+
+3. **Large Tensors**
+
+    In case you do not want so save the images on disk have a look at *How to use a generator function instead of saving the models on disk*
 
 
 

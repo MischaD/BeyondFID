@@ -57,3 +57,6 @@ from beyondfid.feature_extractor_models.byol import BYOL
 from beyondfid.feature_extractor_models.inception import InceptionV3
 from beyondfid.feature_extractor_models.dinov2 import DINOv2
 from beyondfid.feature_extractor_models.clip import CLIP 
+from beyondfid.feature_extractor_models.convnext import ConvNeXTEncoder 
+from beyondfid.feature_extractor_models.data2vec import HuggingFaceTransformerEncoder
+from beyondfid.feature_extractor_models.swav import ResNet50Encoder

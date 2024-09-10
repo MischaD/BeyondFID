@@ -2,3 +2,4 @@
 #conda install xformers -c xformers
 clip @ git+https://github.com/openai/CLIP.git
 av
+timm==0.8.19.dev0

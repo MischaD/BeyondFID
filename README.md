@@ -118,6 +118,13 @@ This work is based on the work of the following repositories and would not have 
 - https://github.com/clovaai/generative-evaluation-prdc
 - https://github.com/marcojira/fld
 - https://github.com/mseitzer/pytorch-fid
+- https://github.com/layer6ai-labs/dgm-eval
+
+We would also like to acknowledge [dgm-eval](https://github.com/layer6ai-labs/dgm-eval) who provide a similar package with a different set of models and metrics.
+    - compute and extract multiple features at once
+    - safe features for further processing
+    - easily add own models
+    - import and run within your own program
 
 # How to add a new feature extraction model: 
 
@@ -159,7 +166,7 @@ In a world of infinite feature extractors, where different runs can already have
 2. Import base class and the register hook: 
 
     ```python 
-        from beyondfid.metrics import save_metric, register_metric, BaseMetric
+        from beyondfid.feature_extractor_models import BaseFeatureModel, register_feature_model
     ```
 
 3. Define the new feature extractor class, import base classes, give it a name in the hook,  and implement compute_latent(x). Arguments can be parsed as model_config which will be explained in the next step: 
@@ -182,19 +189,7 @@ In a world of infinite feature extractors, where different runs can already have
         from beyondfid.feature_extractor_models.clip import CLIP 
     ```
 
-5. Adjust the config (default_config.py) as necessary. To add the computation to the run.py method append the model to the list of feature extractors in default_config.py (has to be the same as name)
-
-    ```python 
-        feature_extractors.names = "clip" + ",inception..." # 
-    ```
-
-6. The same for all metrics you want to compute on the extracted features. Just append it to the list: 
-
-    ```python 
-        fid.models = "inception,clip"
-    ```
-
-7. Next put the settings of the feature extractor in default_config.py - 
+5. Next put the settings of the feature extractor in default_config.py - 
 
     ```python 
         feature_extractors.clip = clip = ml_collections.ConfigDict()
@@ -203,13 +198,17 @@ In a world of infinite feature extractors, where different runs can already have
         clip.config = ml_collections.ConfigDict() # passed to constructor here
     ```
 
-clip.config will be parsed as model_config to the constructor of the CLIP class if you want to test different settings.
+    clip.config will be parsed as model_config to the constructor of the CLIP class if you want to test different settings.
+
+6. Run 
+
+    run.py data/train data/test data/snth --feature_extractors clip --metrics fid fld prdc 
 
 
 # How to use a generator function instead of saving the models on disk
 
-This package was optimized to compute multiple metrics at once, which means we need to save all generated images in memory. 
-This can get memory heavy. 50000 three channel images of size 512x512 take up 147 GB of memory. Make sure you have that available. If not, consider saving images on disk instead. 
+For online processing of metrics, hyperparameter sweeps etc. it might be favorable to compute the metrics without saving images to disk. 
+We also provide a function for this. 
 
 ```python 
     from beyondfid.default_config import config 
@@ -217,12 +216,17 @@ This can get memory heavy. 50000 three channel images of size 512x512 take up 14
     from beyondfid.run import run 
     import torch # only for torch.zeros
 
-    test_images = {"file_key_test":torch.zeros((100, 3, 512, 512))} # key will be used to save features as tensor
+    test_images = {"file_key_test":torch.zeros((100, 3, 512, 512))} # key will be used to save features as tensor -- needs unique name -- tensor ranging from 0 to 1 
     generated_images = {"file_key_gen":torch.zeros((100, 3, 512, 512))} 
 
     # update config with metrics you want to compute
     config = update_config(config, metrics="fid", feature_extractors="inception,dinov2") 
 
     results = run("path/to/train", test_images, generated_images, results_filename="results.json", output_path="./.cache/", config=config)
+    #print(results["inception"]["fid_train"]) - results[<feature_extractor_name>][metric_name]
     print(results)
 ```
+
+This package was optimized to compute multiple metrics at once, which means we need to save all generated images in memory. 
+This can get memory heavy. 50000 three channel images of size 512x512 take up 147 GB of memory. 
+Make sure you have that available. If not, consider saving images on disk instead. Features get reused by different metrics therefore we save the on disk. After execution you can remove files from *./.cache* if necessary.

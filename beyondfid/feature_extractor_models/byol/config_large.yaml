@@ -1,0 +1,24 @@
+network:
+  name: resnet50
+
+  # Specify a folder containing a pre-trained model to fine-tune. If training from scratch, pass None.
+  projection_head:
+    mlp_hidden_size: 4096 
+    projection_size: 256 
+
+data_transforms:
+  s: 1
+  input_shape: (512,512,3)
+
+trainer:
+  batch_size: 64
+  m: 0.996 # momentum update
+  checkpoint_interval: 5000
+  max_epochs: 40
+  num_workers: 4
+
+optimizer:
+  params:
+    lr: 0.03
+    momentum: 0.9
+    weight_decay: 0.0004

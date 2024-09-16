@@ -23,9 +23,9 @@ class MLPHead(nn.Module):
         return self.net(x)
 
 
-class ResNet18(torch.nn.Module):
+class ResNet(torch.nn.Module):
     def __init__(self, *args, **kwargs):
-        super(ResNet18, self).__init__()
+        super(ResNet, self).__init__()
         if kwargs['name'] == 'resnet18':
             resnet = models.resnet18()
         elif kwargs['name'] == 'resnet50':
@@ -45,13 +45,13 @@ class BYOL(BaseFeatureModel, nn.Module):
     def __init__(self, model_config) -> None:
         super().__init__()
         self.config = model_config
-        config = yaml.load(open(os.path.join(model_config.path, "config.yaml"), "r"), Loader=yaml.FullLoader)
+        config = yaml.load(open(os.path.join(model_config.cfg_path), "r"), Loader=yaml.FullLoader)
 
         device = 'cuda' #if torch.cuda.is_available() else 'cpu'
-        encoder = ResNet18(**config['network'])
+        encoder = ResNet(**config['network'])
 
         #load pre-trained parameters
-        load_params = torch.load(os.path.join(os.path.join(model_config.path, "model.pth")),
+        load_params = torch.load(os.path.join(os.path.join(model_config.model_path)),
                                 map_location=torch.device(torch.device(device)))
 
         if 'online_network_state_dict' in load_params:

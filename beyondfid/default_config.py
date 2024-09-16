@@ -13,9 +13,10 @@ feature_extractors.names = feature_models
 
 feature_extractors.byol = byol = ml_collections.ConfigDict()
 byol.name = "byol" # necessary for all feature extractors
-byol.batch_size = 256 # necessary for all feature extractors
+byol.batch_size = 32 # necessary for all feature extractors
 byol.config = ml_collections.ConfigDict()
-byol.config.path = "beyondfid/feature_extractor_models/byol"
+byol.config.model_path = "beyondfid/feature_extractor_models/byol/large_model.pth"
+byol.config.cfg_path = "beyondfid/feature_extractor_models/byol/config_large.yaml"
 
 feature_extractors.inception = inception = ml_collections.ConfigDict()
 inception.name = "inception" # necessary for all feature extractors

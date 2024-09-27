@@ -97,6 +97,10 @@ def run_generic(pathtrain, pathtest, pathsynth, forward_function, config, output
     return results 
 
 
+def hash_only(hash): 
+    return hash.split("_")[-1]  
+
+
 def run(pathtrain, pathtest, pathsynth, output_path, results_filename, config):
     # precompute features for all models and all data. They will be saved as tensors in output_path with the name being a hash
     metrics = config.metric_list
@@ -104,8 +108,11 @@ def run(pathtrain, pathtest, pathsynth, output_path, results_filename, config):
         metrics = list(metrics.split(","))
 
     hashtrain, hashtest, hashsnth = compute_features(config, pathtrain, pathtest, pathsynth, output_path)
-    res_path = os.path.join(output_path, results_filename)
+    hashtrain = hash_only(hashtrain) 
+    hashtest = hash_only(hashtest) 
+    hashsnth = hash_only(hashsnth)
 
+    res_path = os.path.join(output_path, results_filename)
     logger.info(f"Computing metrics. Saving results to {res_path}")
     # log hash paths to results file
     log_paths(output_path, results_filename, hashtrain, hashtest, hashsnth)

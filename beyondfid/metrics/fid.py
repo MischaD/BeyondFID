@@ -156,3 +156,4 @@ class FID(BaseMetric):
             if results_path is not None: 
                 for key, value in fid.items():
                     save_metric(os.path.join(output_path, results_path), model=model, key=f"{key}", value=value)
+        return results

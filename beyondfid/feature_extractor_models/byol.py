@@ -3,6 +3,7 @@ import torchvision.models as models
 import torch
 from torch import nn
 from beyondfid.feature_extractor_models import BaseFeatureModel, register_feature_model
+from torchvision import transforms
 import torch
 import yaml
 import os
@@ -45,27 +46,28 @@ class BYOL(BaseFeatureModel, nn.Module):
     def __init__(self, model_config) -> None:
         super().__init__()
         self.config = model_config
-        config = yaml.load(open(os.path.join(model_config.cfg_path), "r"), Loader=yaml.FullLoader)
-
+        base_dir = os.path.dirname(__file__)
         device = 'cuda' #if torch.cuda.is_available() else 'cpu'
-        encoder = ResNet(**config['network'])
+        model_path = os.path.join(base_dir, model_config.model_path)
+        self.model = models.resnet50()
+        self.model.load_state_dict(torch.load(model_path))
 
-        #load pre-trained parameters
-        load_params = torch.load(os.path.join(os.path.join(model_config.model_path)),
-                                map_location=torch.device(torch.device(device)))
+        self.preprocess = transforms.Compose(
+            [
+                transforms.Resize(
+                    (512, 512)#, interpolation=transforms.InterpolationMode.BICUBIC
+                ),
+            ]
+        )
 
-        if 'online_network_state_dict' in load_params:
-            encoder.load_state_dict(load_params['online_network_state_dict'])
-        self.output_feature_dim = encoder.projetion.net[0].in_features
+        self.model = self.model.to(device)
 
-        # remove the projection head
-        encoder = torch.nn.Sequential(*list(encoder.children())[:-1])    
-        self.encoder = encoder.to(device)
+        self.representation = nn.Sequential(*list(self.model.children())[:-1])
 
 
     def compute_latent(self, x):
         # B x C x H x W -- 0 to 1 
+        x_in = self.preprocess(x)
         with torch.no_grad(): 
-            y = self.encoder(x).squeeze()
+            y = self.representation(x_in).flatten(start_dim=1)
         return y
-

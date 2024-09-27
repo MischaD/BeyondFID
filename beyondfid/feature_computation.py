@@ -18,7 +18,7 @@ def find_free_port():
         return s.getsockname()[1]
 
 def setup(rank, world_size):
-    port = find_free_port()
+    port = "12344"# find_free_port()
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = str(port)  # default port
     # Try initializing the process group
@@ -30,11 +30,22 @@ def cleanup():
     dist.destroy_process_group()
 
 def compute(dataloader, model, device):
+    # progress on gpu 0 
+    def no_progress_bar(x):
+        return x
+    # Check if distributed training has been initialized
+    if dist.is_available() and dist.is_initialized():
+        # Only rank 0 should display the progress bar
+        progress_bar = no_progress_bar if dist.get_rank() != 0 else tqdm
+    else:
+        # If dist is not initialized, assume a single GPU and always show progress bar
+        progress_bar = tqdm
+        
     latents = []
     indices_list = []
     model.eval()
     with torch.no_grad():
-        for images, indices, paths in tqdm(dataloader):
+        for images, indices, paths in progress_bar(dataloader):
             images = images.to(device)
             outputs = model(images).cpu().numpy()
             latents.append(outputs)
@@ -44,10 +55,10 @@ def compute(dataloader, model, device):
     indices = torch.cat(indices_list).cpu().numpy()
     return (latents, indices)
 
-def process(rank, world_size, basedir, file_list, model, fe_config, return_dict):
+def process(rank, world_size, config, basedir, file_list, model, fe_config, return_dict):
     setup(rank, world_size)
 
-    dataloader = get_distributed_dataloader(basedir, file_list, rank, world_size, batch_size=fe_config.batch_size)
+    dataloader = get_distributed_dataloader(basedir, file_list, rank, world_size, batch_size=fe_config.batch_size, num_workers=config.num_workers)
        
     device = f"cuda:{rank}"
     model = load_feature_model(fe_config).to(device)
@@ -56,11 +67,11 @@ def process(rank, world_size, basedir, file_list, model, fe_config, return_dict)
     cleanup()
 
 
-def run_compute_features(model, basedir, file_list, fe_config):
+def run_compute_features(config, model, basedir, file_list, fe_config):
     world_size = torch.cuda.device_count()
     mp_manager = mp.Manager()
     return_dict = mp_manager.dict()
-    mp.spawn(process, args=(world_size, basedir, file_list, model, fe_config, return_dict), nprocs=world_size, join=True)
+    mp.spawn(process, args=(world_size, config, basedir, file_list, model, fe_config, return_dict), nprocs=world_size, join=True)
 
     # Combine the latents from all processes
     all_latents = []
@@ -82,7 +93,7 @@ def run_compute_features(model, basedir, file_list, fe_config):
     return latents
 
 
-def run_compute_features_single_gpu(model, basedir, file_list, fe_config):
+def run_compute_features_single_gpu(config, model, basedir, file_list, fe_config):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     model = load_feature_model(fe_config).to(device)
@@ -102,6 +113,40 @@ def run_compute_features_single_gpu(model, basedir, file_list, fe_config):
 
 
 def precompute_features_from_path(config, fe_config, outdir, path, fe_name, split=None):
+    """
+    Precompute features from a given path and store them in the specified output directory.
+
+    This function processes data from the provided path, which can either be a directory 
+    containing files or a CSV file. The features are computed based on the configurations 
+    provided (`config` and `fe_config`) and are saved in the `outdir` directory with the 
+    specified feature extractor name (`fe_name`). The filename is a hash that depends on 
+    the input filelist and will be retturned. 
+
+    Parameters:
+    -----------
+    config : dict
+        Configuration dictionary with general settings for feature computation.
+    
+    fe_config : dict
+        Feature extraction configuration, containing parameters for the feature extraction process.
+    
+    outdir : str
+        The path to the directory where the precomputed features will be saved.
+    
+    path : str
+        The path to the data source, which can be either a directory containing files or a .csv file.
+    
+    fe_name : str
+        Name of the feature extractor to be used, which determines the method for feature computation.
+    
+    split : str, optional
+        Data split identifier (e.g., 'TRAIN', 'VAL', 'TEST'). Default is None.
+
+    Returns:
+    --------
+    None
+        hashname of the dataset. 
+    """
     # path can be directory containing files or .csv
     if isinstance(path, str):
         file_list_are_paths = True
@@ -119,10 +164,10 @@ def precompute_features_from_path(config, fe_config, outdir, path, fe_name, spli
 
         if fe_name == "generic":
             # might not be pickleable --> Single-GPU computation
-            real_latents = run_compute_features_single_gpu(model=fe_name, basedir=basedir, file_list=file_list, fe_config=fe_config)
+            real_latents = run_compute_features_single_gpu(config=config, model=fe_name, basedir=basedir, file_list=file_list, fe_config=fe_config)
         else:
             # Multi-GPU computation
-            real_latents = run_compute_features(model=fe_name, basedir=basedir, file_list=file_list, fe_config=fe_config)
+            real_latents = run_compute_features(config=config, model=fe_name, basedir=basedir, file_list=file_list, fe_config=fe_config)
         
         # save tensor 
         torch.save(real_latents, hash_path)
@@ -140,6 +185,7 @@ def compute_features(config, pathtrain, pathtest, pathsynth, output_path):
     for feature_extractor_name in feature_extractor_names:
         logger.info(f"Computing features for model: {feature_extractor_name}")
         fe_config = config.feature_extractors.get(feature_extractor_name)
+
         # prepare out dir
         features_out_dir = os.path.join(output_path, feature_extractor_name)
         os.makedirs(features_out_dir, exist_ok=True)
@@ -150,9 +196,12 @@ def compute_features(config, pathtrain, pathtest, pathsynth, output_path):
         logger.info("Precomputing features of test data")
         test_hash = precompute_features_from_path(config, fe_config, features_out_dir, pathtest, feature_extractor_name, split="TEST")
 
-        logger.info("Precomputing features of synth data")
-        snth_hash = precompute_features_from_path(config, fe_config, features_out_dir, pathsynth, feature_extractor_name)
-
+        if pathsynth != pathtrain: 
+            logger.info("Precomputing features of synth data")
+            snth_hash = precompute_features_from_path(config, fe_config, features_out_dir, pathsynth, feature_extractor_name)
+        else: 
+            logger.info("Skipping synth features as they have the same path as train")
+            snth_hash = train_hash
     # returns only the hashpath of the saved tensor - fullpath is hashdata_{modelname}_<{real/snth}_hash_name>
     train_hash = "_".join(train_hash.split("_")[2:])[:-3]
     test_hash = "_".join(test_hash.split("_")[2:])[:-3]

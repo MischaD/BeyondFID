@@ -60,3 +60,8 @@ from beyondfid.feature_extractor_models.clip import CLIP
 from beyondfid.feature_extractor_models.convnext import ConvNeXTEncoder 
 from beyondfid.feature_extractor_models.data2vec import HuggingFaceTransformerEncoder
 from beyondfid.feature_extractor_models.swav import ResNet50Encoder
+from beyondfid.feature_extractor_models.flatten import Flatten, FlattenResize 
+from beyondfid.feature_extractor_models.sdvae import SDVAE
+
+# check licenses
+from beyondfid.feature_extractor_models.mae import VisionTransformerEncoder

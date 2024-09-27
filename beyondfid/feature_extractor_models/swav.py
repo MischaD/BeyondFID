@@ -328,7 +328,7 @@ class ResNet(nn.Module):
         )[1], 0)
         start_idx = 0
         for end_idx in idx_crops:
-            _out = self.forward_backbone(torch.cat(inputs[start_idx: end_idx]).cuda(non_blocking=True))
+            _out = self.forward_backbone(torch.cat(inputs[start_idx: end_idx]))#.cuda(non_blocking=True))
             if start_idx == 0:
                 output = _out
             else:
@@ -362,7 +362,7 @@ def resnet50(**kwargs):
 @register_feature_model(name="swav")
 class ResNet50Encoder(BaseFeatureModel, nn.Module):
     def __init__(self, model_config):
-        super().__init__()
+        super(ResNet50Encoder, self).__init__()
         self.model_config = model_config
         self.model = resnet50()
 
@@ -376,4 +376,5 @@ class ResNet50Encoder(BaseFeatureModel, nn.Module):
     
     def compute_latent(self, x): 
         x = self.transform(x)
-        return self.model.forward(x)
+        return self.model(x)
+

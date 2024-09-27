@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
+import numpy as np
 from beyondfid.feature_extractor_models import BaseFeatureModel, register_feature_model
 
 try:
@@ -349,6 +350,15 @@ def _inception_v3(*args, **kwargs):
     return torchvision.models.inception_v3(*args, **kwargs)
 
 
+def set_seed(seed=42):
+    """Set random seed for reproducibility."""
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
 def fid_inception_v3():
     """Build pretrained Inception model for FID computation
 
@@ -372,6 +382,7 @@ def fid_random():
     This method first constructs torchvision's Inception and then patches the
     necessary parts that are different in the FID Inception model.
     """
+    set_seed(42)
     inception = _inception_v3(num_classes=1008, aux_logits=False, weights=None)
     inception.Mixed_5b = FIDInceptionA(192, pool_features=32)
     inception.Mixed_5c = FIDInceptionA(256, pool_features=64)

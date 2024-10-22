@@ -7,6 +7,7 @@ import torch.multiprocessing as mp
 import torch
 import socket
 import torch.distributed as dist
+from beyondfid.data import get_data_csv
 from tqdm import tqdm
 import numpy as np
 from beyondfid.log import logger
@@ -110,6 +111,37 @@ def run_compute_features_single_gpu(config, model, basedir, file_list, fe_config
     latents = torch.Tensor(latents)
     return latents
 
+def precompute_features_from_tensor(config, fe_config, outdir, path, fe_name, split=None):
+    # check if real features already computed
+    images = torch.load(path)
+    file_list_path = path.replace(".pt", ".csv")
+    if not os.path.exists(file_list_path): 
+        raise ValueError("To compute on a dataset consisting of one big tensor you need to prove the filelist which has the same name but .csv as ending")
+    basedir = path.replace(".pt", "")
+
+    file_list_csv = pd.read_csv(file_list_path)
+
+    _, hash_name = get_data_csv(file_list_path, fe_name=fe_name, split=split)
+    #file_list = imgdict
+    file_list = images 
+    hash_path = os.path.join(outdir, hash_name + ".pt")
+
+    if not os.path.exists(hash_path):
+        logger.info(f"Computing features for {fe_name} and saving to {hash_path}")
+        if fe_name == "generic":
+            # might not be pickleable --> Single-GPU computation
+            real_latents = run_compute_features_single_gpu(config=config, model=fe_name, basedir=basedir, file_list=file_list, fe_config=fe_config)
+        else:
+            # Multi-GPU computation
+            real_latents = run_compute_features(config=config, model=fe_name, basedir=basedir, file_list=file_list, fe_config=fe_config)
+        
+        # save tensor 
+        torch.save(real_latents, hash_path)
+        # save list as csv 
+        file_list_csv.to_csv(hash_path.replace(".pt",".csv"))
+    else: 
+        logger.info(f"Precomputed feature tensor already found in: {hash_path}")
+    return hash_name  + ".pt"
 
 
 def precompute_features_from_path(config, fe_config, outdir, path, fe_name, split=None):
@@ -147,8 +179,10 @@ def precompute_features_from_path(config, fe_config, outdir, path, fe_name, spli
     None
         hashname of the dataset. 
     """
-    # path can be directory containing files or .csv
+    # path can be directory containing files or .csv, or large tenors 
     if isinstance(path, str):
+        if path.endswith(".pt"): 
+            return precompute_features_from_tensor(path, fe_config, outdir, path, fe_name, split=None)
         file_list_are_paths = True
         basedir = os.path.dirname(path) if not os.path.isdir(path) else path 
     else: 
@@ -176,29 +210,34 @@ def precompute_features_from_path(config, fe_config, outdir, path, fe_name, spli
             pd.DataFrame({"FileName":file_list}).to_csv(hash_path.rstrip(".pt") + ".csv")
     else: 
         logger.info(f"Precomputed feature tensor already found in: {hash_path}")
-    return hash_path
+    return hash_name  + ".pt"
 
 
-def compute_features(config, pathtrain, pathtest, pathsynth, output_path): 
+def compute_features(config, pathtrain, pathtest, pathsynth, output_path, features_out_dir=None): 
     feature_extractor_names = config.feature_extractors.names.split(",")
+    feature_extractor_names = [x for x in feature_extractor_names if x != ""]
 
     for feature_extractor_name in feature_extractor_names:
         logger.info(f"Computing features for model: {feature_extractor_name}")
         fe_config = config.feature_extractors.get(feature_extractor_name)
 
         # prepare out dir
-        features_out_dir = os.path.join(output_path, feature_extractor_name)
-        os.makedirs(features_out_dir, exist_ok=True)
+        if features_out_dir is None: 
+            features_out_dir_fe = os.path.join(output_path, feature_extractor_name)
+        else: 
+            features_out_dir_fe = features_out_dir
+            
+        os.makedirs(features_out_dir_fe, exist_ok=True)
 
         logger.info("Precomputing features of train data")
-        train_hash = precompute_features_from_path(config, fe_config, features_out_dir, pathtrain, feature_extractor_name, split="TRAIN")
+        train_hash = precompute_features_from_path(config, fe_config, features_out_dir_fe, pathtrain, feature_extractor_name, split="TRAIN")
 
         logger.info("Precomputing features of test data")
-        test_hash = precompute_features_from_path(config, fe_config, features_out_dir, pathtest, feature_extractor_name, split="TEST")
+        test_hash = precompute_features_from_path(config, fe_config, features_out_dir_fe, pathtest, feature_extractor_name, split="TEST")
 
         if pathsynth != pathtrain: 
             logger.info("Precomputing features of synth data")
-            snth_hash = precompute_features_from_path(config, fe_config, features_out_dir, pathsynth, feature_extractor_name)
+            snth_hash = precompute_features_from_path(config, fe_config, features_out_dir_fe, pathsynth, feature_extractor_name)
         else: 
             logger.info("Skipping synth features as they have the same path as train")
             snth_hash = train_hash

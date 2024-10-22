@@ -126,6 +126,40 @@ def run(pathtrain, pathtest, pathsynth, output_path, results_filename, config):
     return json_to_dict(res_path)
 
 
+def run_model(model, name, config, output_path, pathtrain, pathtest=None, pathsynth=None, batch_size=128, results_filename="results.json"):
+    """model with forward function, name for the model and its feature tensors, path to safe tensors to.
+    """
+
+    from beyondfid.feature_extractor_models import BaseFeatureModel, register_feature_model
+    import torch.nn as nn
+
+    @register_feature_model(name=name)
+    class GenericPickleableFeatureModel(BaseFeatureModel, nn.Module):
+        def __init__(self, *args, **kwargs):
+            super().__init__()
+
+        def compute_latent(self, x):
+            return model(x)
+
+    config.feature_extractors.names =",".join([name,] + config.feature_extractors.names.split(","))
+    if pathtest is None: 
+        pathtest = pathtrain # will not be computed twic
+    if pathsynth is None: 
+        pathsynth = pathtrain # will not be computed twic
+
+    setattr(config.feature_extractors, name, ml_collections.ConfigDict())
+    
+    fe_config = getattr(config.feature_extractors, name)
+
+    # load_feature_model(fe_config) will be called in feature_computation.process - fe_config == config.feature_extractors.name.config 
+    fe_config.batch_size = batch_size # necessary for all feature extractors
+    fe_config.name = name # necessary for all feature extractors
+    fe_config.config = ml_collections.ConfigDict()
+
+    run(pathtrain, pathtest, pathsynth, output_path, results_filename, config)
+
+
+
 def get_args():
     parser = argparse.ArgumentParser(description="BeyondFID CLI")
     parser.add_argument("pathtrain", type=str, help="Train data dir or csv with paths to train data. Recursively looks through data dir")
@@ -136,7 +170,7 @@ def get_args():
     parser.add_argument("--metrics", type=str, nargs="+", default=[], help="What metrics to use. Leave empty to compute all available metrics.", choices=_METRICS.keys())
 
     parser.add_argument("--config", type=str, default="", help="Configuration file. Defaults all values to config.py. All values set here will be overwritten")
-    parser.add_argument("--output_path", type=str, default="beyondfid", help="Output path to save feature tensors and results.")
+    parser.add_argument("--output_path", type=str, default="resultsbeyondfid", help="Output path to save feature tensors and results.")
     parser.add_argument("--results_filename", type=str, default="results.json", help="Name of file with results. Defaults to <output_path>/results.json")
 
     # Add an argument for dynamic config updates

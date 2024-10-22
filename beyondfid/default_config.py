@@ -105,10 +105,12 @@ fld.models = feature_models
 metrics.kid = kid = ml_collections.ConfigDict()
 kid.models = feature_models
 
-metrics.support = support = ml_collections.ConfigDict()
-support.models = feature_models
-support.alphas = [2, 4, 6, 8, 10, 12, 14, 16,]
-support.batch_size = 512*(2**2)
+metrics.vendi = vendi = ml_collections.ConfigDict()
+vendi.models = feature_models
+vendi.q=1
+vendi.normalize=True
+vendi.kernel='linear'
+vendi.max_size=50_000
 
 metrics.is_score = is_score = ml_collections.ConfigDict()
 is_score.models = "inception" # -- hardcoded right now 

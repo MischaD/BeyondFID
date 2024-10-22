@@ -16,6 +16,7 @@ Supported metrics are:
 
     git clone git@github.com:MischaD/BeyondFID.git
     pip install -e .
+    conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
 
 ## Preparation 
 There are three potential ways to define datasets:  
@@ -148,6 +149,7 @@ In a world of infinite feature extractors, where different runs can already have
     config.metrics.prdc.nearest_k = 3 
 
 
+    # use output path to name model. <output_path>/generic/hashdata_generic_<hash>.pt
     results = run_generic("path/to/train", "path/to/test", "path/to/snth", forward_function, config, output_path="./.cache/")
     # Some metrics like FID, IS, KID, FLD do not need train and test data. Just set the same path twice. 
     print(results)

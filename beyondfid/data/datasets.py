@@ -54,6 +54,7 @@ class GenericDataset(Dataset):
         self.basedir = basedir
         self.file_list = file_list
         self.n_frames = n_frames
+        self.got_warned = False
 
     def __len__(self):
         return len(self.file_list)
@@ -70,7 +71,9 @@ class GenericDataset(Dataset):
         elif file_ending == "pt": 
             tensor = torch.load(os.path.join(self.basedir, path))
             if tensor.min() < 0 or tensor.max() > 1:
-                logger.warning(f"Tensor {os.path.join(self.basedir, path)} not 0-1 normalized.") 
+                if not self.got_warned:
+                    logger.warning(f"Tensor {os.path.join(self.basedir, path)} not 0-1 normalized.") 
+                    self.got_warned = True
             if tensor.dim() == 4:
                 frame = first_frame(tensor)
             else: 

@@ -59,6 +59,7 @@ def get_data_from_folder(path, fe_name, config=None):
                 relative_path = os.path.relpath(os.path.join(root, file), path)
                 file_list.append(relative_path)
     
+    file_list = sorted(file_list)
     output_filename = hash_dataset_path(os.path.dirname(path),img_list=file_list, descriptor=fe_name)
     logger.info(f"{len(file_list)} files found for path {path}")
     return file_list, os.path.basename(output_filename)

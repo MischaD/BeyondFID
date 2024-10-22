@@ -94,4 +94,6 @@ from beyondfid.metrics.authpct import AuthPctMetric
 from beyondfid.metrics.cttest import CTTestMetric
 from beyondfid.metrics.fld import FLDMetric
 from beyondfid.metrics.kid import KIDMetric
+from beyondfid.metrics.diversity import DiversityMetric 
+from beyondfid.metrics.irs import IRSMetric 
 from beyondfid.metrics.vendi import VendiMetric 

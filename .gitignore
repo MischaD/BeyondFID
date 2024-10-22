@@ -174,3 +174,6 @@ BeyondFID/data
 *.tar.gz
 beyondfid/feature_extractor_models/byol/model.pth
 bcioutput/results.json
+beyondfid/feature_extractor_models/byol/small_model.pth
+test_model.py
+beyondfid/feature_extractor_models/byol/large_model.pth

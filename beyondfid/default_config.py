@@ -5,7 +5,7 @@ from torchvision import transforms as T
 config = ml_collections.ConfigDict()
 
 feature_models = "inception,byol"#,byol,random,dinov2,clip" # all of these features will be computed
-config.metric_list = "prdc,fid,is_score,cttest,authpct,fld,kid,support"
+config.metric_list = "vendi,irs,prdc,fid,is_score,cttest,authpct,fld,kid,diversity"
 config.num_workers = 8 # for video data use low values, for images high (vid:0-2, img:4-8)
 
 # feature extraction configs 
@@ -104,6 +104,19 @@ fld.models = feature_models
 
 metrics.kid = kid = ml_collections.ConfigDict()
 kid.models = feature_models
+
+metrics.diversity = diversity = ml_collections.ConfigDict()
+diversity.models = feature_models
+diversity.alphas = [2, 4]
+diversity.batch_size = 512*(2**2)
+diversity.folds = 3 # how often to compute with different subset. Only used if train and test is the same
+
+metrics.irs = irs = ml_collections.ConfigDict()
+irs.models = feature_models
+irs.alpha_e = 0.05
+irs.prob_tolerance = 1e-6
+irs.naive = False # binary search or naive
+irs.batch_size = 512*(2**2)
 
 metrics.vendi = vendi = ml_collections.ConfigDict()
 vendi.models = feature_models

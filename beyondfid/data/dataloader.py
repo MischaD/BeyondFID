@@ -12,7 +12,7 @@ def get_dataloader(basedir, filelist, batch_size, num_workers=8):
     dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers)
     return dataloader
 
-def get_distributed_dataloader(basedir, filelist, rank, world_size, batch_size, num_workers=8):
+def get_distributed_dataloader(basedir, filelist, rank, world_size, batch_size, num_workers=4):
     if not isinstance(filelist[0], str): 
         # filelist is list of tensor etc. 
         dataset = TensorDataset(filelist)

@@ -6,7 +6,7 @@ config = ml_collections.ConfigDict()
 
 feature_models = "inception,byol"#,byol,random,dinov2,clip" # all of these features will be computed
 config.metric_list = "vendi,irs,prdc,fid,is_score,cttest,authpct,fld,kid,diversity"
-config.num_workers = 8 # for video data use low values, for images high (vid:0-2, img:4-8)
+config.num_workers = 4 # for video data use low values, for images high (vid:0-2, img:4-8)
 
 # feature extraction configs 
 config.feature_extractors = feature_extractors = ml_collections.ConfigDict()
@@ -123,7 +123,7 @@ vendi.models = feature_models
 vendi.q=1
 vendi.normalize=True
 vendi.kernel='linear'
-vendi.max_size=50_000
+vendi.max_size=10_000
 
 metrics.is_score = is_score = ml_collections.ConfigDict()
 is_score.models = "inception" # -- hardcoded right now 

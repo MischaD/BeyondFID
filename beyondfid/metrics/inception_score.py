@@ -23,7 +23,7 @@ class ISScore(BaseMetric):
 
     def get_inception_pred(self,x):
         x = self.inception.fc(x)
-        return F.softmax(x, dim=0).data.cpu()
+        return x.cpu() # F.softmax(x, dim=0).data.cpu()
 
     def compute(self, train_features, test_features, snth_features):
         """
@@ -45,6 +45,7 @@ class ISScore(BaseMetric):
             # taken from: https://github.com/Lightning-AI/torchmetrics/blob/master/src/torchmetrics/image/inception.py
 
             idx = torch.randperm(ds.shape[0])
+            #preds = preds.transpose(0, 1)
             features = preds[idx]
 
             # calculate probs and logits

@@ -42,8 +42,11 @@ class VendiMetric(BaseMetric):
         Returns:
             dict of precision, recall, density, and coverage.
         """
+        logger.info("Computing vendi for train dataset")
         train = self._compute(train_features)
+        logger.info("Computing vendi for test dataset")
         test = self._compute(test_features)
+        logger.info("Computing vendi for test dataset")
         snth = self._compute(snth_features)
         return {"vendi_train": train, 
                 "vendi_test": test,
@@ -86,10 +89,22 @@ class VendiMetric(BaseMetric):
         X = X.cpu()
 
         # Compute eigenvalues using torch.linalg.eigvalsh on GPU
-        w = eigvalsh(S / n)
-        
-        return float(np.exp(self.entropy_q(w.cpu(), q=self.config.q)))
 
+        try:
+            w = scipy.linalg.eigvalsh(S.cpu().numpy() / n)
+            #w = torch.linalg.eigvalsh(S / n)
+            return float(np.exp(self.entropy_q(w, q=self.config.q)))
+
+        except torch._C._LinAlgError as e:
+            logger.warning(f"LinAlgError occurred: {e}")
+            # Optionally, you can handle NaNs in the matrix here
+            if torch.isnan(S).any():
+                logger.warning("The input matrix contains NaN values.")
+            else:
+                logger.warning("An unknown error occurred.")
+            logger.warning("Returning -1 instead")
+            return -1
+            
 
     def entropy_q(self, p, q=1):
         p_ = p[p > 0]
@@ -98,3 +113,4 @@ class VendiMetric(BaseMetric):
         if q == "inf":
             return -np.log(np.max(p))
         return np.log((p_ ** q).sum()) / (1 - q)
+    

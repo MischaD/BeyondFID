@@ -242,30 +242,51 @@ class IRSMetric(BaseMetric):
         return {"diversity_train_only": results}
 
 
-    def compute(self, train, _, snth): 
+    def compute(self, train, test, snth): 
         # test is ignored for now 
         n_train = len(train)
-        n_sampled = len(snth)
-        closest, perc = self.compute_support(train, snth)
+        n_ref_test = len(test)
+        n_ref_snth = len(snth)
+        n_ref = min(n_ref_test, n_ref_snth)
 
-        k_measured = len(set(closest))
-        alpha = k_measured / n_train
+        # Define a generator with a fixed seed
+        generator = torch.Generator()
+        generator.manual_seed(42)  # Replace 42 with your desired seed value
 
-        print(f"Computing IRS results")
+        if n_ref_snth > n_ref: 
+            logger.info(f"Randomly sampling {n_ref} synthetic images to make reference estimate IRS_a more accurate")
+            rnd_idx = torch.randperm(n_ref_snth, generator=generator)[:n_ref]
+            snth = snth[rnd_idx]
+        elif n_ref_test > n_ref: 
+            logger.info(f"Randomly sampling {n_ref} test images to make reference estimate IRS_a more accurate. Consider using multiple folds")
+            rnd_idx = torch.randperm(n_ref_test, generator=generator)[:n_ref]
+            test = test[rnd_idx]
 
-        irs_pred_lower, irs_pred, irs_prep_higher = self.compute_irs_inf(n_train, n_sampled, k_measured)
-        k_learned_pred = int(irs_pred * n_train)
+        results = {}
+        for name, ref_data in zip(["test", "snth"], [test, snth]): 
+            closest, perc = self.compute_support(train, ref_data)
 
-        return {"n_train": n_train, 
-                "n_sampled": n_sampled, 
+            k_measured = len(set(closest))
+            alpha = k_measured / n_train
+
+            logger.info(f"Computing IRS results")
+
+            irs_pred_lower, irs_pred, irs_prep_higher = self.compute_irs_inf(n_train, len(ref_data), k_measured)
+            k_learned_pred = int(irs_pred * n_train)
+
+            results[name] = {"n_train": n_train, 
+                "n_sampled": len(ref_data), 
                 "k_measured": k_measured,
                 "alpha": alpha,
-                f"irs_alpha": perc, 
+                "irs_alpha": perc, 
                 "irs_inf_u": irs_prep_higher,
                 "irs_inf_l": irs_pred_lower,
                 "irs_inf": irs_pred,
                 "k_pred_inf": k_learned_pred,
-                }
+            }
+        
+        results["irs_adjusted"] = results["snth"]["k_pred_inf"] / results["test"]["k_pred_inf"]
+        return results
 
 
     def compute_from_path(self, output_path, hashtrain, hashtest, hashsnth, results_path=None):

@@ -95,6 +95,7 @@ class IRSMetric(BaseMetric):
         self.prob_tolerance = config.prob_tolerance
         self.naive = config.naive
         self.batch_size = config.batch_size # for computation of closes neighbour
+        self.verbose = config.verbose
 
 
     def compute_irs_inf(self, n_train_max, n_sampled, k_measured): 
@@ -108,9 +109,10 @@ class IRSMetric(BaseMetric):
         prob_tolerance= self.prob_tolerance
         naive= self.naive
         
-        print(f"Maximum Possible Number of Train Images: {n_train_max}\nSampled images: {n_sampled}\nLearned images: {k_measured}")
         alpha_of_IRS_alpha = n_sampled / n_train
-        print(f"IRS (alpha={alpha_of_IRS_alpha:.2f}): {k_measured / n_train_max}")
+        if self.verbose:
+            print(f"Maximum Possible Number of Train Images: {n_train_max}\nSampled images: {n_sampled}\nLearned images: {k_measured}")
+            print(f"IRS (alpha={alpha_of_IRS_alpha:.2f}): {k_measured / n_train_max}")
         
         if naive == True: 
             probs = []
@@ -198,14 +200,16 @@ class IRSMetric(BaseMetric):
             n_learned_low = low  # The smallest value that satisfies the condition
 
         irs_pred = n_learned_pred / n_train_max
-        print(f"IRS (inf): {irs_pred}")
-        print(f"Predicted number of images for IRS_infinity: {n_learned_pred} -- IRS: {irs_pred}")
+        if self.verbose: 
+            print(f"IRS (inf): {irs_pred}")
+            print(f"Predicted number of images for IRS_infinity: {n_learned_pred} -- IRS: {irs_pred}")
 
         if confidence == True: 
             irs_prep_higher = n_learned_high / n_train_max
             irs_prep_lower = n_learned_low / n_train_max
-            print(f"Predicted number of images for IRS_infinity,H: {n_learned_high} -- IRS: {irs_prep_higher}")
-            print(f"Predicted number of images for IRS_infinity,L: {n_learned_low} -- IRS: {irs_prep_lower}\n")
+            if self.verbose: 
+                print(f"Predicted number of images for IRS_infinity,H: {n_learned_high} -- IRS: {irs_prep_higher}")
+                print(f"Predicted number of images for IRS_infinity,L: {n_learned_low} -- IRS: {irs_prep_lower}\n")
             return (irs_prep_lower, irs_pred, irs_prep_higher)
 
         return (None, irs_pred, None)
@@ -269,7 +273,8 @@ class IRSMetric(BaseMetric):
             k_measured = len(set(closest))
             alpha = k_measured / n_train
 
-            logger.info(f"Computing IRS results")
+            if self.verbose: 
+                logger.info(f"Computing IRS results")
 
             irs_pred_lower, irs_pred, irs_prep_higher = self.compute_irs_inf(n_train, len(ref_data), k_measured)
             k_learned_pred = int(irs_pred * n_train)

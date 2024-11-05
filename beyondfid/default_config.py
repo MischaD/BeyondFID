@@ -117,6 +117,7 @@ irs.alpha_e = 0.05
 irs.prob_tolerance = 1e-6
 irs.naive = False # binary search or naive
 irs.batch_size = 512*(2**2)
+irs.verbose = True
 
 metrics.vendi = vendi = ml_collections.ConfigDict()
 vendi.models = feature_models

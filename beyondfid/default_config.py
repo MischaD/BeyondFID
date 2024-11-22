@@ -3,6 +3,7 @@ from torchvision import transforms as T
 
 
 config = ml_collections.ConfigDict()
+config.master_port = 12344
 
 feature_models = "inception,byol"#,byol,random,dinov2,clip" # all of these features will be computed
 config.metric_list = "vendi,irs,prdc,fid,is_score,cttest,authpct,fld,kid,diversity"
@@ -91,7 +92,7 @@ fid.models = feature_models
 
 metrics.prdc = prdc = ml_collections.ConfigDict()
 prdc.models = feature_models
-prdc.nearest_k = 1
+prdc.nearest_k = 5
 
 metrics.authpct = authpct = ml_collections.ConfigDict()
 authpct.models = feature_models

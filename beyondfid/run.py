@@ -175,6 +175,7 @@ def get_args():
 
     # Add an argument for dynamic config updates
     parser.add_argument('--config-update', action=UpdateConfigAction, nargs='+', help="Update config parameters, e.g., --config-update=config.feature_extractors.byol.batch_size=16")
+    parser.add_argument('--master_port', type=int, default=12344)
     return parser.parse_args()
 
 
@@ -190,6 +191,7 @@ def main():
         logger.info(f"Overwriting models setting for all metrics and setting it to {config.feature_extractors.names}")
         for metric in _METRICS.keys():
             getattr(config.metrics, metric).models =  config.feature_extractors.names
+    config.master_port = args.master_port
     run(args.pathtrain, args.pathtest, args.pathsynth, args.output_path, args.results_filename, config)
 
 

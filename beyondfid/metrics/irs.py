@@ -255,7 +255,7 @@ class IRSMetric(BaseMetric):
 
         # Define a generator with a fixed seed
         generator = torch.Generator()
-        generator.manual_seed(42)  # Replace 42 with your desired seed value
+        generator.manual_seed(42) 
 
         if n_ref_snth > n_ref: 
             logger.info(f"Randomly sampling {n_ref} synthetic images to make reference estimate IRS_a more accurate")
@@ -299,8 +299,37 @@ class IRSMetric(BaseMetric):
         for model in self.models:
             train, test, snth = self.path_to_tensor(output_path, model, hashtrain, hashtest, hashsnth)
             
+            if hashtrain == hashtest:
+                logger.info("Train and test path are equal. Subsampling train dataset and using them as test dataset")
+                # Both are the same, so irs_real will be 1.0
+                # Manual subsampling: split train in half with random samples in train and the other half in test
+                permuted_indices = torch.randperm(train.size(0))
+                split_index = train.size(0) // 2
+                test = train[permuted_indices[split_index:]]
+                train = train[permuted_indices[:split_index]]
+
+            if len(test) < 50_000: 
+                # subsample over self.config.n_folds iterations with different subsets of snth that have the same lenght as train
+                n_subsets = int(len(snth) // len(test))
+                indices = torch.randperm(snth.size(0))
+                immed_results = []
+                for i in range(n_subsets): 
+                    metrics = self.compute(train, test, snth[indices[i * len(test):(i+1)*len(test)]])
+                    immed_results.append(metrics)
+
+                mean_results = {}
+                for key in immed_results[0].keys():
+                    # Ensure that nested dictionaries (e.g., results under "test" and "snth") are handled
+                    if isinstance(immed_results[0][key], dict):
+                        mean_results[key] = {}
+                        for sub_key in immed_results[0][key].keys():
+                            mean_results[key][sub_key] = sum(result[key][sub_key] for result in immed_results) / len(immed_results)
+                    else:
+                        mean_results[key] = sum(result[key] for result in immed_results) / len(immed_results)
+            else: 
+                metrics = self.compute(train, test, snth)
+
             # test data is unused
-            metrics = self.compute(train, test, snth)
             results[model] = metrics
             if results_path is not None: 
                 for key, value in metrics.items():

@@ -18,8 +18,8 @@ def find_free_port():
         s.bind(('', 0))
         return s.getsockname()[1]
 
-def setup(rank, world_size):
-    port = "12344"# find_free_port()
+def setup(rank, world_size, master_port):
+    port = f"{master_port}"# find_free_port()
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = str(port)  # default port
     # Try initializing the process group
@@ -56,8 +56,8 @@ def compute(dataloader, model, device):
     indices = torch.cat(indices_list).cpu().numpy()
     return (latents, indices)
 
-def process(rank, world_size, config, basedir, file_list, model, fe_config, return_dict):
-    setup(rank, world_size)
+def process(rank, world_size, config, basedir, file_list, model, fe_config, return_dict, master_port=12344):
+    setup(rank, world_size, master_port=master_port)
 
     dataloader = get_distributed_dataloader(basedir, file_list, rank, world_size, batch_size=fe_config.batch_size, num_workers=config.num_workers)
        
@@ -72,7 +72,8 @@ def run_compute_features(config, model, basedir, file_list, fe_config):
     world_size = torch.cuda.device_count()
     mp_manager = mp.Manager()
     return_dict = mp_manager.dict()
-    mp.spawn(process, args=(world_size, config, basedir, file_list, model, fe_config, return_dict), nprocs=world_size, join=True)
+    master_port = config.master_port
+    mp.spawn(process, args=(world_size, config, basedir, file_list, model, fe_config, return_dict, master_port), nprocs=world_size, join=True)
 
     # Combine the latents from all processes
     all_latents = []

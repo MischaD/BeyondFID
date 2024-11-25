@@ -6,12 +6,13 @@ config = ml_collections.ConfigDict()
 config.master_port = 12344
 
 feature_models = "inception,byol"#,byol,random,dinov2,clip" # all of these features will be computed
-config.metric_list = "vendi,irs,prdc,fid,is_score,cttest,authpct,fld,kid,diversity"
-config.num_workers = 4 # for video data use low values, for images high (vid:0-2, img:4-8)
+config.metric_list = "irs,fid,prdc,is_score,cttest,authpct,fld,kid,vendi"
+config.num_workers = 0 # for video data use low values, for images high (vid:0-2, img:4-8)
 
 # feature extraction configs 
 config.feature_extractors = feature_extractors = ml_collections.ConfigDict()
 feature_extractors.names = feature_models 
+config.feature_extractors.always_overwrite_snth = False # ignores if hash of synthetic dataset exists -> always recomputes features
 
 feature_extractors.byol = byol = ml_collections.ConfigDict()
 byol.name = "byol" # necessary for all feature extractors

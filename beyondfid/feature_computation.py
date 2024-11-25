@@ -145,7 +145,7 @@ def precompute_features_from_tensor(config, fe_config, outdir, path, fe_name, sp
     return hash_name  + ".pt"
 
 
-def precompute_features_from_path(config, fe_config, outdir, path, fe_name, split=None):
+def precompute_features_from_path(config, fe_config, outdir, path, fe_name, split=None, force_recompute=False):
     """
     Precompute features from a given path and store them in the specified output directory.
 
@@ -194,7 +194,7 @@ def precompute_features_from_path(config, fe_config, outdir, path, fe_name, spli
     # check if real features already computed
     file_list, hash_name = get_data(config, path, fe_name=fe_name, split=split)
     hash_path = os.path.join(outdir, hash_name + ".pt")
-    if not os.path.exists(hash_path):
+    if not os.path.exists(hash_path) or force_recompute:
         logger.info(f"Computing features for {fe_name} and saving to {hash_path}")
 
         if fe_name == "generic":
@@ -238,7 +238,7 @@ def compute_features(config, pathtrain, pathtest, pathsynth, output_path, featur
 
         if pathsynth != pathtrain: 
             logger.info("Precomputing features of synth data")
-            snth_hash = precompute_features_from_path(config, fe_config, features_out_dir_fe, pathsynth, feature_extractor_name)
+            snth_hash = precompute_features_from_path(config, fe_config, features_out_dir_fe, pathsynth, feature_extractor_name, force_recompute=config.feature_extractors.always_overwrite_snth)
         else: 
             logger.info("Skipping synth features as they have the same path as train")
             snth_hash = train_hash

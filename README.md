@@ -1,8 +1,9 @@
 # BeyondFID
-A python package to streamline evaluation of unconditional image generation models. 
+A python package to streamline evaluation of (unconditional) image generation models. 
 If you have a folder full of images or videos and want to compute image-wise generative metrics you are at the right place. 
 Supported metrics are: 
 
+- [IRS](tba)
 - [FID](https://arxiv.org/abs/1706.08500)
 - [KID](https://arxiv.org/abs/1801.01401)
 - [FLD](https://arxiv.org/abs/2302.04440)
@@ -12,13 +13,30 @@ Supported metrics are:
 - [Coverage, Density](https://arxiv.org/abs/2002.09797) 
 - [Inception Score](https://proceedings.neurips.cc/paper_files/paper/2016/hash/8a3363abe792db2d8761d6403605aeb7-Abstract.html)
 
-## installation 
+# Table of Contents
+- [Installation](#installation)
+- [Supported Dataset Structure](#supported-dataset-structure)
+  - [Folders](#folders)
+  - [CSV File Structure](#csv-file-structure)
+  - [Large Tensors](#large-tensors)
+- [Usage](#usage)
+  - [As CLI](#as-cli)
+  - [Within Python](#within-python)
+- [Advanced Usage](#advanced-usage)
+  - [How to Add a New Feature Extraction Model](#how-to-add-a-new-feature-extraction-model)
+    - [The Quick Way](#the-quick-way)
+    - [The Clean Way](#the-clean-way)
+  - [How to Use a Generator Function Instead of Saving Models on Disk](#how-to-use-a-generator-function-instead-of-saving-models-on-disk)
+- [Acknowledgements](#acknowledgements)
+- [Cite Us](#cite-us)
+
+## Installation 
 
     git clone git@github.com:MischaD/BeyondFID.git
     pip install -e .
     conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
 
-## Preparation 
+## Supported Dataset Structure 
 There are three potential ways to define datasets:  
 
 1. **Folders:**
@@ -62,14 +80,14 @@ There are three potential ways to define datasets:
 
 If the file extension is `pt` it will check for the number of dimensions and assumes that a three dimensional tensor is an image and a four dimensional one a video. 
 
-## Rules for Video as input data
-For videos we reduce the video to the first frame. This approach should only be used if the subject of the video does not change (For example a talking face).
+### Rules for Video as input data
+For videos we reduce the video to the first frame. This approach should only be used if the subject of the video does not change (For example a talking face). For more information see [https://arxiv.org/abs/2411.04956?](https://arxiv.org/abs/2411.04956?).
 
 ## Usage 
 
 As CLI 
 
-    beyondfid path/to/train path/to/test path/to/synth --feature_extractors inception dinov2 clip --metrics fid fld prdc
+    beyondfid path/to/train path/to/test path/to/synth --feature_extractors swav dinov2 inception --metrics irs fid
 
     #--config "new_default.py"\ # see beyondfid.default_config.py for an example 
     #--output_path "path/to/output"\ # where the features and results_filename will be saved
@@ -84,10 +102,10 @@ from beyondfid.utils import update_config
 from beyondfid.run import run
 
 # decide what features to extract, run beyondfid -h for a full list, can be custom (see below)
-feature_extractors="inception,dinov2" 
+feature_extractors="swav,inception,dinov2" 
 
  # decide what metrics you want to compute, run beyonfid -h for a full list
-metrics ="fid,is_score,kid,prdc"
+metrics ="fid,irs"
 
 # update the config
 config = update_config(config, metrics=metrics, feature_extractors=feature_extractors) 
@@ -102,30 +120,17 @@ results = run("path/to/train", "path/to/train", "path/to/synth", "out/path", "re
 print(results["dinov2"]["fid_train"]) # fid with dino features between synthetic and train dataset
 ```
 
+⚠️ **Important:** For every feature extractor beyondfid only computes the feature tensor once. To save it for future use it uses the hash of the relative path to *all* files in the given directory (ignoring the name of the basedir). This means that two datasets with the same filestructure, names, and number of files will also have the same hash (e.g. a folder with 100 samples named sample_0.png-sample_100.png). Double check for every real dataset (you will also be able to see it from the output). For the synthetic datasets beyondfid always recomputes the feature tensor so you dont have to find different names for the same synthetic dataset (e.g. you compare multiple checkpoints with the same script). You can deactivate this behaviour by setting 
+
+    config.feature_extractors.always_overwrite_snth = False
+
+
 # Advanced Usage
 - You do not want to save the generated images on disc? 
 - You want to evalute your own feature extraction method? 
 
 Then see below! 
 
-
-## Requirements 
-
-CUDA has to be available and it needs to run on a GPU 
-
-## Acknowledgements 
-This work is based on the work of the following repositories and would not have been possible without them:
-
-- https://github.com/clovaai/generative-evaluation-prdc
-- https://github.com/marcojira/fld
-- https://github.com/mseitzer/pytorch-fid
-- https://github.com/layer6ai-labs/dgm-eval
-
-We would also like to acknowledge [dgm-eval](https://github.com/layer6ai-labs/dgm-eval) who provide a similar package with a different set of models and metrics.
-    - compute and extract multiple features at once
-    - safe features for further processing
-    - easily add own models
-    - import and run within your own program
 
 # How to add a new feature extraction model: 
 
@@ -232,3 +237,26 @@ We also provide a function for this.
 This package was optimized to compute multiple metrics at once, which means we need to save all generated images in memory. 
 This can get memory heavy. 50000 three channel images of size 512x512 take up 147 GB of memory. 
 Make sure you have that available. If not, consider saving images on disk instead. Features get reused by different metrics therefore we save the on disk. After execution you can remove files from *./.cache* if necessary.
+
+
+
+## Acknowledgements 
+This work is based on the work of the following repositories and would not have been possible without them:
+
+- https://github.com/clovaai/generative-evaluation-prdc
+- https://github.com/marcojira/fld
+- https://github.com/mseitzer/pytorch-fid
+- https://github.com/layer6ai-labs/dgm-eval
+
+We would also like to acknowledge [dgm-eval](https://github.com/layer6ai-labs/dgm-eval) who provide a similar package with a different set of models and metrics.
+    - IRS metric!
+    - compute and extract multiple features at once
+    - safe features for further processing
+    - easily add own models
+    - import and run within your own program
+
+## Cite Us
+
+If you find this useful, please cite use: 
+
+TODO

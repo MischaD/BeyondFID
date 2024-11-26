@@ -3,7 +3,7 @@ A python package to streamline evaluation of (unconditional) image generation mo
 If you have a folder full of images or videos and want to compute image-wise generative metrics you are at the right place. 
 Supported metrics are: 
 
-- [IRS](tba)
+- [IRS](https://arxiv.org/abs/2411.16171)
 - [FID](https://arxiv.org/abs/1706.08500)
 - [KID](https://arxiv.org/abs/1801.01401)
 - [FLD](https://arxiv.org/abs/2302.04440)
@@ -22,6 +22,7 @@ Supported metrics are:
 - [Usage](#usage)
   - [As CLI](#as-cli)
   - [Within Python](#within-python)
+  - [Extract IRS Score](#extracting-irs-score)
 - [Advanced Usage](#advanced-usage)
   - [How to Add a New Feature Extraction Model](#how-to-add-a-new-feature-extraction-model)
     - [The Quick Way](#the-quick-way)
@@ -124,6 +125,10 @@ print(results["dinov2"]["fid_train"]) # fid with dino features between synthetic
 
     config.feature_extractors.always_overwrite_snth = False
 
+### Extracting IRS Score 
+
+The results will be safed in a .json file. To extract the adjusted irs score we suggest SWaV as explained in the paper (jsonfile["swav"]["irs_adjusted"]).  
+If your training dataset is much smaller than your test data then you can use the score directly (jsonfile["swav"]["snth"]["irs_inf"]). 
 
 # Advanced Usage
 - You do not want to save the generated images on disc? 
@@ -255,8 +260,17 @@ We would also like to acknowledge [dgm-eval](https://github.com/layer6ai-labs/dg
     - easily add own models
     - import and run within your own program
 
-## Cite Us
+## Citation 
 
-If you find this useful, please cite use: 
+If you find this code useful, please cite us: 
 
-TODO
+    @misc{dombrowski2024imagegenerationdiversityissues,
+        title={Image Generation Diversity Issues and How to Tame Them}, 
+        author={Mischa Dombrowski and Weitong Zhang and Sarah Cechnicka and Hadrien Reynaud and Bernhard Kainz},
+        year={2024},
+        eprint={2411.16171},
+        archivePrefix={arXiv},
+        primaryClass={cs.CV},
+        url={https://arxiv.org/abs/2411.16171}, 
+    }
+

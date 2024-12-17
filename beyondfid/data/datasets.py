@@ -82,7 +82,8 @@ class GenericDataset(Dataset):
             # Load and normalize an image
             image_path = os.path.join(self.basedir, path)
             frame = Image.open(image_path).convert("RGB")  # Ensure image is in RGB format
-            frame = transforms.ToTensor()(frame)
+            trafos = transforms.Compose([transforms.Resize(512), transforms.CenterCrop(512), transforms.ToTensor()])
+            frame = trafos(frame)
 
         return frame, idx, path  # Return index to maintain order
 

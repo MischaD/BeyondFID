@@ -59,6 +59,8 @@ def compute(dataloader, model, device):
 def process(rank, world_size, config, basedir, file_list, model, fe_config, return_dict, master_port=12344):
     setup(rank, world_size, master_port=master_port)
 
+    if config.basedir != "":
+        basedir = config.basedir
     dataloader = get_distributed_dataloader(basedir, file_list, rank, world_size, batch_size=fe_config.batch_size, num_workers=config.num_workers)
        
     device = f"cuda:{rank}"
@@ -100,6 +102,8 @@ def run_compute_features_single_gpu(config, model, basedir, file_list, fe_config
 
     model = load_feature_model(fe_config).to(device)
 
+    if config.basedir != "":
+        basedir = config.basedir
     dataloader = get_dataloader(basedir, file_list, batch_size=fe_config.batch_size)
 
     latents, indices = compute(dataloader, model, device=device)

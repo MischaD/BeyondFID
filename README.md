@@ -34,6 +34,8 @@ Supported metrics are:
 ## Installation 
 
     git clone git@github.com:MischaD/BeyondFID.git
+    conda create --name beyondfid python=3.11
+    conda activate beyondfid
     pip install -e .
     conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
 

@@ -291,6 +291,7 @@ class IRSMetric(BaseMetric):
             }
         
         results["irs_adjusted"] = results["snth"]["k_pred_inf"] / results["test"]["k_pred_inf"]
+        logger.info(f"IRS_adjusted_inf = {results['irs_adjusted']}")
         return results
 
 
@@ -309,9 +310,15 @@ class IRSMetric(BaseMetric):
                 train = train[permuted_indices[:split_index]]
 
             if len(test) < 50_000: 
-                # subsample over self.config.n_folds iterations with different subsets of snth that have the same lenght as train
                 n_subsets = int(len(snth) // len(test))
                 indices = torch.randperm(snth.size(0))
+
+                if n_subsets == 0:
+                    logger.info("Fewer snth samples than test images. Manually reducing size of test dataset.")
+                    test_indices = torch.randperm(test.size(0))[:snth.size(0)]
+                    test = test[test_indices]
+                    n_subsets = 1
+
                 immed_results = []
                 for i in range(n_subsets): 
                     metrics = self.compute(train, test, snth[indices[i * len(test):(i+1)*len(test)]])

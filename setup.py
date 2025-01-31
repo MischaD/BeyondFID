@@ -12,6 +12,17 @@ setup(
     install_requires=[
         # List your dependencies here, e.g.:
         # "numpy>=1.18.0",
+        'clip@git+https://github.com/openai/CLIP.git',
+        'av',
+        'ml_collections',
+        'pandas',
+        'timm',
+        'diffusers',
+        'accelerate',
+        'matplotlib',
+        'transformers',
+        'opencv-python',
+        'scikit-learn',
     ],
     author="Mischa Dombrowski",
     author_email="mischa.dombrowski@gmail.com",

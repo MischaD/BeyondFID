@@ -13,7 +13,7 @@ config.num_workers = 0 # for video data use low values, for images high (vid:0-2
 # feature extraction configs 
 config.feature_extractors = feature_extractors = ml_collections.ConfigDict()
 feature_extractors.names = feature_models 
-config.feature_extractors.always_overwrite_snth = False # ignores if hash of synthetic dataset exists -> always recomputes features
+config.feature_extractors.always_overwrite_snth = True # ignores if hash of synthetic dataset exists -> always recomputes features
 
 feature_extractors.byol = byol = ml_collections.ConfigDict()
 byol.name = "byol" # necessary for all feature extractors

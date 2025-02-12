@@ -130,7 +130,14 @@ print(results["dinov2"]["fid_train"]) # fid with dino features between synthetic
 ### Extracting IRS Score 
 
 The results will be safed in a .json file. To extract the adjusted irs score we suggest SWaV as explained in the paper (jsonfile["swav"]["irs_adjusted"]).  
-If your training dataset is much smaller than your test data then you can use the score directly (jsonfile["swav"]["snth"]["irs_inf"]). 
+
+
+#### Which IRS Score to report? 
+To know if you which IRS score is most relevant you have to understand the Measurement Gap as described in [IRS](https://arxiv.org/abs/2411.16171). Here is the key rule that you need to understand: 
+
+- If your training set is small (in relation to snth), then you can ignore the measurement gap and report jsonfile["swav"]["snth"]["irs_inf"] directly. 
+
+- If your training set is large (in relation to snth), then you should use the adjusted score instead jsonfile["swav"]["irs_adjusted"] or report the IRS score as a mean over multiple subsets of the training dataset.
 
 # Advanced Usage
 - You do not want to save the generated images on disc? 

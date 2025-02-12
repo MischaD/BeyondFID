@@ -1,4 +1,5 @@
 import os
+import socket
 import argparse
 import ml_collections
 import importlib.util
@@ -179,6 +180,23 @@ def get_args():
     return parser.parse_args()
 
 
+def find_free_port(start_port):
+    """Finds a free port starting from `start_port`, falling back to any available port."""
+    port = start_port
+    while port < 65535:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(('', port))
+                return port
+            except OSError:
+                port += 1  # Try the next port
+
+    # If all ports are occupied, get a random free port
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        return s.getsockname()[1]
+
+
 def main():
     args = get_args()
     global config
@@ -191,7 +209,7 @@ def main():
         logger.info(f"Overwriting models setting for all metrics and setting it to {config.feature_extractors.names}")
         for metric in _METRICS.keys():
             getattr(config.metrics, metric).models =  config.feature_extractors.names
-    config.master_port = args.master_port
+    config.master_port = find_free_port(args.master_port)
     run(args.pathtrain, args.pathtest, args.pathsynth, args.output_path, args.results_filename, config)
 
 

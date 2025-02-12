@@ -12,20 +12,11 @@ from tqdm import tqdm
 import numpy as np
 from beyondfid.log import logger
 
-def find_free_port():
-    # Use socket to find a free port dynamically
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
-        return s.getsockname()[1]
 
 def setup(rank, world_size, master_port):
-    port = f"{master_port}"# find_free_port()
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = str(port)  # default port
-    # Try initializing the process group
+    os.environ['MASTER_PORT'] = str(master_port)  # Assign the free port
     dist.init_process_group(backend="nccl", rank=rank, world_size=world_size)
-
-# Example usage
 
 def cleanup():
     dist.destroy_process_group()

@@ -63,5 +63,5 @@ from beyondfid.feature_extractor_models.swav import ResNet50Encoder
 from beyondfid.feature_extractor_models.flatten import Flatten, FlattenResize 
 from beyondfid.feature_extractor_models.sdvae import SDVAE
 
-# check licenses
+from beyondfid.feature_extractor_models.cxr import CXR
 from beyondfid.feature_extractor_models.mae import VisionTransformerEncoder

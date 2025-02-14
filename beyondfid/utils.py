@@ -3,6 +3,9 @@ from beyondfid.data import ALLOWED_EXTENSIONS
 import os
 import json
 from beyondfid.log import logger
+import torch 
+import torch.nn.functional as F
+
 
 def make_exp_config(exp_file):
     if exp_file.endswith(".json"): 
@@ -37,3 +40,9 @@ def update_config(config, feature_extractors:str, metrics:str):
     for metric in config.metrics.keys(): 
         getattr(config.metrics, metric).models = feature_extractors
     return config
+
+class ToTensorIfNotTensor:
+    def __call__(self, input):
+        if isinstance(input, torch.Tensor):
+            return input
+        return F.to_tensor(input)

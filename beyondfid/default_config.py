@@ -8,7 +8,7 @@ config.basedir = "" # automatically extracts it from the Filepath
 
 feature_models = "inception,byol"#,byol,random,dinov2,clip" # all of these features will be computed
 config.metric_list = "irs,fid,prdc,is_score,cttest,authpct,fld,kid,vendi"
-config.num_workers = 0 # for video data use low values, for images high (vid:0-2, img:4-8)
+config.num_workers = 8 # for video data use low values, for images high (vid:0-2, img:4-8)
 
 # feature extraction configs 
 config.feature_extractors = feature_extractors = ml_collections.ConfigDict()
@@ -86,6 +86,12 @@ sdvae.batch_size = 32
 sdvae.config = ml_collections.ConfigDict() # pass to constructor here
 sdvae.config.path = "stabilityai/stable-diffusion-2"
 
+feature_extractors.cxr = cxr = ml_collections.ConfigDict()
+cxr.name = "cxr"
+cxr.batch_size = 32
+cxr.config = ml_collections.ConfigDict() # pass to constructor here
+cxr.config.path = "/vol/ideadata/ed52egek/pycharm/trichotomy/importantmodels/results_chexnet_real/saved_models_cxr8/m-05122024-131940.pth.tar"
+cxr.config.n_classes = 8
 
 # config.metrics 
 config.metrics = metrics = ml_collections.ConfigDict()

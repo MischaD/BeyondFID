@@ -223,7 +223,7 @@ In a world of infinite feature extractors, where different runs can already have
 
 6. Run 
 
-    run.py data/train data/test data/snth --feature_extractors clip --metrics fid fld prdc 
+    run.py data/train data/test data/snth --feature_extractors clip --metrics fid irs  
 
 
 # How to use a generator function instead of saving the models on disk
@@ -262,7 +262,8 @@ This work is based on the work of the following repositories and would not have 
 - https://github.com/mseitzer/pytorch-fid
 - https://github.com/layer6ai-labs/dgm-eval
 
-We would also like to acknowledge [dgm-eval](https://github.com/layer6ai-labs/dgm-eval) who provide a similar package with a different set of models and metrics.
+We would also like to acknowledge [dgm-eval](https://github.com/layer6ai-labs/dgm-eval) who provide a similar package with a different set of models and metrics:
+
     - IRS metric!
     - compute and extract multiple features at once
     - safe features for further processing

@@ -1,4 +1,8 @@
 # BeyondFID
+
+Our paper has been accepted at CVPR 2025. You can find a preprint [here](https://arxiv.org/abs/2411.16171).
+
+## Usage 
 A python package to streamline evaluation of (unconditional) image generation models. 
 If you have a folder full of images or videos and want to compute image-wise generative metrics you are at the right place. 
 Supported metrics are: 

@@ -1,13 +1,18 @@
 #xformers==0.0.18 # for Dinov2, can be left out to automatically be replaced by MLP 
 #conda install xformers -c xformers
+torch>=2.0.0
+torchvision>=0.15.0
 clip @ git+https://github.com/openai/CLIP.git
-av
-ml_collections
-pandas
-timm
-diffusers 
-accelerate
-matplotlib
-transformers
-opencv-python
-scikit-learn
+av>=10.0.0
+ml_collections>=0.1.1
+pandas>=1.5.0
+timm>=0.9.0
+diffusers>=0.21.0
+accelerate>=0.21.0
+matplotlib>=3.7.0
+transformers>=4.30.0
+opencv-python>=4.8.0
+scikit-learn>=1.3.0
+numpy>=1.24.0
+pillow>=10.0.0
+tqdm>=4.65.0

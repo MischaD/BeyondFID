@@ -1,13 +1,16 @@
 # BeyondFID
-
 Our paper has been accepted at CVPR 2025. You can find a preprint [here](https://arxiv.org/abs/2411.16171).
 
 ## Usage 
-A python package to streamline evaluation of (unconditional) image generation models. 
+This repository focusses on the use of **IRS**, a diversity metric we proposed. If you want to use DiADM have a look at [this repository](https://github.com/MischaD/Trichotomy). It provides a python package to streamline evaluation of (unconditional) image generation models. 
 If you have a folder full of images or videos and want to compute image-wise generative metrics you are at the right place. 
-Supported metrics are: 
+
+Use this package to compute IRS: 
 
 - [IRS](https://arxiv.org/abs/2411.16171)
+
+Other supported metrics are: 
+
 - [FID](https://arxiv.org/abs/1706.08500)
 - [KID](https://arxiv.org/abs/1801.01401)
 - [FLD](https://arxiv.org/abs/2302.04440)
@@ -19,6 +22,7 @@ Supported metrics are:
 
 # Table of Contents
 - [Installation](#installation)
+- [Quick Start](#quick-start)
 - [Supported Dataset Structure](#supported-dataset-structure)
   - [Folders](#folders)
   - [CSV File Structure](#csv-file-structure)
@@ -36,12 +40,45 @@ Supported metrics are:
 - [Cite Us](#cite-us)
 
 ## Installation 
+Using Conda:
+```bash
+git clone https://github.com/MischaD/BeyondFID.git
+cd BeyondFID
+conda create -n beyondfid python=3.11
+conda activate beyondfid
+pip install -e .
+```
 
-    git clone git@github.com:MischaD/BeyondFID.git
-    conda create --name beyondfid python=3.11
-    conda activate beyondfid
-    pip install -e .
-    conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
+Requirements:
+- Python >= 3.8
+- PyTorch >= 2.0.0
+- CUDA (optional, but recommended for faster processing)
+The package will automatically install all required dependencies. If you encounter any issues with CUDA, you may need to install PyTorch separately following the instructions at [pytorch.org](https://pytorch.org/get-started/locally/).
+
+## Quick Start
+If you have three folders with train, test (reference real data, can also be a disjoint train split), and synthetic data you can immediately start to compute IRS using: 
+
+        beyondfid path/to/train path/to/test path/to/synth --feature_extractors swav --metrics irs 
+
+Computation will take a few minutes depending on the size of the datasets. 
+
+#### Output Explanation: 
+First you see the (unadjusted) irs results for the test dataset. This is computed using the test images as retrieval query for the train dataset. The values you see are: 
+- Train size
+- Test size 
+- Number of learned images
+- Then IRS$_\alpha$, so the current IRS value
+- IRS$_\infty$ 
+- IRS$_{\infty,U}$ upper boundary with an error probabilty of five percent
+- IRS$_{\infty,L}$ lower boundary with an error probabilty of five percent
+
+Then you see the same again **but this time for the synthetic dataset**. 
+
+Finally, the last output is 
+- **IRS$_{\infty,a}$**, the score we used for our main experiments 
+
+It will also create a folder "resultsbeyondfid" (set by --output_path) that saves preliminary feature vectors to disk and all results in result.json
+For more details and advanced usage refer to the paper or the instructions below. 
 
 ## Supported Dataset Structure 
 There are three potential ways to define datasets:  

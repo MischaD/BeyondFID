@@ -13,6 +13,7 @@ setup(
         'torch>=2.0.0',
         'torchvision>=0.15.0',
         'clip @ git+https://github.com/openai/CLIP.git',
+        'fld @ git+https://github.com/marcojira/fld.git',
         'av>=10.0.0',
         'ml_collections>=0.1.1',
         'pandas>=1.5.0',

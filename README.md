@@ -315,13 +315,12 @@ We would also like to acknowledge [dgm-eval](https://github.com/layer6ai-labs/dg
 
 If you find this code useful, please cite us: 
 
-    @misc{dombrowski2024imagegenerationdiversityissues,
-        title={Image Generation Diversity Issues and How to Tame Them}, 
-        author={Mischa Dombrowski and Weitong Zhang and Sarah Cechnicka and Hadrien Reynaud and Bernhard Kainz},
-        year={2024},
-        eprint={2411.16171},
-        archivePrefix={arXiv},
-        primaryClass={cs.CV},
-        url={https://arxiv.org/abs/2411.16171}, 
+    @InProceedings{Dombrowski_2025_CVPR,
+      author    = {Dombrowski, Mischa and Zhang, Weitong and Cechnicka, Sarah and Reynaud, Hadrien and Kainz, Bernhard},
+      title     = {Image Generation Diversity Issues and How to Tame Them},
+      booktitle = {Proceedings of the Computer Vision and Pattern Recognition Conference (CVPR)},
+      month     = {June},
+      year      = {2025},
+      pages     = {3029-3039}
     }
 

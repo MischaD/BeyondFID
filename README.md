@@ -178,7 +178,7 @@ To know if you which IRS score is most relevant you have to understand the Measu
 
 - If your training set is small (in relation to snth), then you can ignore the measurement gap and report jsonfile["swav"]["snth"]["irs_inf"] directly. 
 
-- If your training set is large (in relation to snth), then you should use the adjusted score instead jsonfile["swav"]["irs_adjusted"] or report the IRS score as a mean over multiple subsets of the training dataset.
+- If your training set is the same size or large (in relation to snth), then you should use the adjusted score instead jsonfile["swav"]["irs_adjusted"] or report the IRS score as a mean over multiple subsets of the training dataset.
 
 # Advanced Usage
 - You do not want to save the generated images on disc? 

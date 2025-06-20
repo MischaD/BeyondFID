@@ -1,5 +1,5 @@
 # BeyondFID
-Our paper has been accepted at CVPR 2025. You can find a preprint [here](https://arxiv.org/abs/2411.16171).
+Our paper has been accepted at CVPR 2025. You can read our paper [here](https://openaccess.thecvf.com/content/CVPR2025/html/Dombrowski_Image_Generation_Diversity_Issues_and_How_to_Tame_Them_CVPR_2025_paper.html).
 
 ## Usage 
 This repository focusses on the use of **IRS**, a diversity metric we proposed. If you want to use DiADM have a look at [this repository](https://github.com/MischaD/Trichotomy). It provides a python package to streamline evaluation of (unconditional) image generation models. 
@@ -7,7 +7,7 @@ If you have a folder full of images or videos and want to compute image-wise gen
 
 Use this package to compute IRS: 
 
-- [IRS](https://arxiv.org/abs/2411.16171)
+- [IRS](https://openaccess.thecvf.com/content/CVPR2025/html/Dombrowski_Image_Generation_Diversity_Issues_and_How_to_Tame_Them_CVPR_2025_paper.html)
 
 Other supported metrics are: 
 
@@ -174,7 +174,7 @@ The results will be safed in a .json file. To extract the adjusted irs score we 
 
 
 #### Which IRS Score to report? 
-To know if you which IRS score is most relevant you have to understand the Measurement Gap as described in [IRS](https://arxiv.org/abs/2411.16171). Here is the key rule that you need to understand: 
+To know if you which IRS score is most relevant you have to understand the Measurement Gap as described in [IRS](https://openaccess.thecvf.com/content/CVPR2025/html/Dombrowski_Image_Generation_Diversity_Issues_and_How_to_Tame_Them_CVPR_2025_paper.html). Here is the key rule that you need to understand: 
 
 - If your training set is small (in relation to snth), then you can ignore the measurement gap and report jsonfile["swav"]["snth"]["irs_inf"] directly. 
 

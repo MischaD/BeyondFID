@@ -278,8 +278,9 @@ We also provide a function for this.
     from beyondfid.run import run 
     import torch # only for torch.zeros
 
-    test_images = {"file_key_test":torch.zeros((100, 3, 512, 512))} # key will be used to save features as tensor -- needs unique name -- tensor ranging from 0 to 1 
-    generated_images = {"file_key_gen":torch.zeros((100, 3, 512, 512))} 
+    # Do not use '_' in key 
+    test_images = {"filekeytest":torch.zeros((100, 3, 512, 512))} # key will be used to save features as tensor -- needs unique name -- tensor ranging from 0 to 1 
+    generated_images = {"filekeygen":torch.zeros((100, 3, 512, 512))} 
 
     # update config with metrics you want to compute
     config = update_config(config, metrics="fid", feature_extractors="inception,dinov2") 

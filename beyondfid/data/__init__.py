@@ -15,9 +15,10 @@ def hash_dataset_path(dataset_root_dir, img_list, descriptor=""):
 
 def get_data_csv(path, fe_name, config=None, split=None):
     data_csv = pd.read_csv(path)
-    if split is not None: 
+    if split is not None:
         data_csv = data_csv[data_csv["Split"]==split]
-    file_list = list(data_csv["FileName"])
+    filename_key = config.get("filename_key", "FileName") if config else "FileName"
+    file_list = list(data_csv[filename_key])
     output_filename = hash_dataset_path(os.path.dirname(path),img_list=file_list, descriptor=fe_name)
     return file_list, os.path.basename(output_filename)
 

@@ -5,6 +5,7 @@ from torchvision import transforms as T
 config = ml_collections.ConfigDict()
 config.master_port = 12344
 config.basedir = "" # automatically extracts it from the Filepath
+config.filename_key = "FileName"
 
 feature_models = "inception,byol"#,byol,random,dinov2,clip" # all of these features will be computed
 config.metric_list = "irs,fid,prdc,is_score,cttest,authpct,fld,kid,vendi"

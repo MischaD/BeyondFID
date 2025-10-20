@@ -97,6 +97,7 @@ def run_generic(pathtrain, pathtest, pathsynth, forward_function, config, output
         config_metric.models = name # overwrite to 
         metric = load_metric(metric_name, config_metric) 
         results[metric_name] = metric.compute_from_path(output_path, hashtrain, hashtest, hashsnth, results_path=None)
+    results["paths"] = {"train": hashtrain, "test": hashtest, "snth": hashsnth}
     return results 
 
 

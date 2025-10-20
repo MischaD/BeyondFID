@@ -112,6 +112,10 @@ def run(pathtrain, pathtest, pathsynth, output_path, results_filename, config):
         metrics = list(metrics.split(","))
 
     hashtrain, hashtest, hashsnth = compute_features(config, pathtrain, pathtest, pathsynth, output_path)
+    if metrics is None : 
+        return {"train": hashtrain, "test": hashtest, "snth": hashsnth}
+
+    hashtrain, hashtest, hashsnth = compute_features(config, pathtrain, pathtest, pathsynth, output_path)
     hashtrain = hash_only(hashtrain) 
     hashtest = hash_only(hashtest) 
     hashsnth = hash_only(hashsnth)

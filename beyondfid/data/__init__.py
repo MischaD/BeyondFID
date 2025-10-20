@@ -64,10 +64,10 @@ def get_data_from_folder(path, fe_name, config=None):
     logger.info(f"{len(file_list)} files found for path {path}")
     return file_list, os.path.basename(output_filename)
 
-def get_data_from_list(file_list, fe_name): 
+def get_data_from_list(out_path, file_list, fe_name): 
     file_list = sorted(file_list)
     logger.info(f"{len(file_list)} files found in list")
-    output_filename = hash_dataset_path(os.path.dirname(path),img_list=file_list, descriptor=fe_name)
+    output_filename = hash_dataset_path(out_path, img_list=file_list, descriptor=fe_name)
     return file_list, output_filename
  
 
@@ -82,7 +82,8 @@ def get_data(config, path, fe_name, split):
         return img_list, "hashdata_" + fe_name + "_" + f"{file_key}" 
 
     elif isinstance(path, list): 
-        return get_data_from_list(path, fe_name)
+        out_path = config.get("generic_out_path", ".") 
+        return get_data_from_list(out_path, path, fe_name)
 
     if path.endswith(".csv"):
         return get_data_csv(path, fe_name, config, split)

@@ -71,20 +71,22 @@ def update_config(cfg, new_config):
     return updated_config
 
 
-def run_generic(pathtrain, pathtest, pathsynth, forward_function, config, output_path, batch_size=256):
+def run_generic(pathtrain, pathtest, pathsynth, forward_function, config, output_path, batch_size=256, name="generic"):
     # helper function to run generic models only defined by a forward function. 
-    config.feature_extractors.names = "generic"
+    config.feature_extractors.names = name
     config.feature_extractors.generic = ml_collections.ConfigDict()
 
     # load_feature_model(fe_config) will be called in feature_computation.process - fe_config == config.feature_extractors.generic.config 
     config.feature_extractors.generic.batch_size = batch_size # necessary for all feature extractors
-    config.feature_extractors.generic.name = "generic" # necessary for all feature extractors
+    config.feature_extractors.generic.name = name # necessary for all feature extractors
     config.feature_extractors.generic.config = ml_collections.ConfigDict()
     config.feature_extractors.generic.config.forward = forward_function
 
     metrics = config.metric_list
     if isinstance(metrics, str):
         metrics = list(metrics.split(","))
+    if metics is None: 
+        metrics = []
 
     hashtrain, hashtest, hashsnth = compute_features(config, pathtrain, pathtest, pathsynth, output_path)
 
@@ -92,7 +94,7 @@ def run_generic(pathtrain, pathtest, pathsynth, forward_function, config, output
     for metric_name in metrics: 
         logger.info(f"Computing {metric_name}")
         config_metric = config.metrics.get(metric_name)
-        config_metric.models = "generic" # overwrite to 
+        config_metric.models = name # overwrite to 
         metric = load_metric(metric_name, config_metric) 
         results[metric_name] = metric.compute_from_path(output_path, hashtrain, hashtest, hashsnth, results_path=None)
     return results 

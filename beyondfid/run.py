@@ -85,7 +85,7 @@ def run_generic(pathtrain, pathtest, pathsynth, forward_function, config, output
     metrics = config.metric_list
     if isinstance(metrics, str):
         metrics = list(metrics.split(","))
-    if metics is None: 
+    if metrics is None: 
         metrics = []
 
     hashtrain, hashtest, hashsnth = compute_features(config, pathtrain, pathtest, pathsynth, output_path)

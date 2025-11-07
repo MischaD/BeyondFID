@@ -17,7 +17,8 @@ def get_data_csv(path, fe_name, config=None, split=None):
     data_csv = pd.read_csv(path)
     if split is not None:
         data_csv = data_csv[data_csv["Split"]==split]
-    filename_key = config.get("filename_key", "FileName") if config else "FileName"
+    # Get filename_key from config, defaulting to "FileName" if not provided
+    filename_key = getattr(config, "filename_key", "FileName")
     file_list = list(data_csv[filename_key])
     output_filename = hash_dataset_path(os.path.dirname(path),img_list=file_list, descriptor=fe_name)
     return file_list, os.path.basename(output_filename)

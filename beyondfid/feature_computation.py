@@ -203,7 +203,8 @@ def precompute_features_from_path(config, fe_config, outdir, path, fe_name, spli
         torch.save(real_latents, hash_path)
         # save list as csv 
         if file_list_are_paths:
-            pd.DataFrame({"FileName":file_list}).to_csv(hash_path.rstrip(".pt") + ".csv")
+            filename_key = getattr(config, "filename_key", "FileName")
+            pd.DataFrame({filename_key: file_list}).to_csv(hash_path.rstrip(".pt") + ".csv")
     else: 
         logger.info(f"Precomputed feature tensor already found in: {hash_path}")
     return hash_name  + ".pt"

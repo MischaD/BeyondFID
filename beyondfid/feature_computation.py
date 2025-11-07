@@ -184,6 +184,9 @@ def precompute_features_from_path(config, fe_config, outdir, path, fe_name, spli
     else: 
         file_list_are_paths = False 
         basedir = None
+        if hasattr(config, "overwrite_basedir"):
+            basedir = config.overwrite_basedir
+            
     #os.makedirs(basedir, exist_ok=True)
 
     # check if real features already computed

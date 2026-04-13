@@ -12,9 +12,6 @@ setup(
     install_requires=[
         'torch>=2.0.0',
         'torchvision>=0.15.0',
-        'clip @ git+https://github.com/openai/CLIP.git',
-        'fld @ git+https://github.com/marcojira/fld.git',
-        'av>=10.0.0',
         'ml_collections>=0.1.1',
         'pandas>=1.5.0',
         'timm>=0.9.0',
@@ -22,12 +19,26 @@ setup(
         'accelerate>=0.21.0',
         'matplotlib>=3.7.0',
         'transformers>=4.30.0',
-        'opencv-python>=4.8.0',
+        'opencv-python-headless>=4.8.0',
         'scikit-learn>=1.3.0',
         'numpy>=1.24.0',
         'pillow>=10.0.0',
         'tqdm>=4.65.0',
     ],
+    extras_require={
+        # pip install "beyondfid[clip]"
+        'clip': ['clip @ git+https://github.com/openai/CLIP.git'],
+        # pip install "beyondfid[fld]"
+        'fld': ['fld @ git+https://github.com/marcojira/fld.git'],
+        # pip install "beyondfid[video]"
+        'video': ['av>=10.0.0'],
+        # pip install "beyondfid[all]"
+        'all': [
+            'clip @ git+https://github.com/openai/CLIP.git',
+            'fld @ git+https://github.com/marcojira/fld.git',
+            'av>=10.0.0',
+        ],
+    },
     author="Mischa Dombrowski",
     author_email="mischa.dombrowski@gmail.com",
     description="Python package to efficiently compute common metrics used for unconditional image generation",

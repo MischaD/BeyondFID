@@ -1,5 +1,4 @@
 import os
-import socket
 import argparse
 import ml_collections
 import importlib.util
@@ -168,40 +167,177 @@ def run_model(model, name, config, output_path, pathtrain, pathtest=None, pathsy
 
 
 
+_FEATURE_MODEL_DESCRIPTIONS = {
+    "inception":     "InceptionV3 — standard backbone for FID/IS (ImageNet)",
+    "swav":          "ResNet-50 trained with SwAV self-supervised contrastive learning (recommended for IRS)",
+    "dinov2":        "DINOv2 ViT-B/14 self-supervised transformer (Facebook)",
+    "convnext":      "ConvNeXt-XL trained on ImageNet-21k (timm)",
+    "mae":           "Masked Autoencoder ViT-L/16 (Facebook)",
+    "data2vec":      "data2vec ViT-L vision transformer (HuggingFace checkpoint)",
+    "byol":          "ResNet-50 trained with BYOL (local checkpoint required)",
+    "sdvae":         "Stable Diffusion VAE latent encoder (requires diffusers)",
+    "clip":          "OpenAI CLIP ViT-B/32 (optional — install separately)",
+    "cxr":           "CheXNet ResNet-50 for chest X-ray images (domain-specific)",
+    "flatten":       "Raw pixel values flattened to a 1-D vector (baseline)",
+    "flatten_resize":"Raw pixel values after resize to 224×224, then flattened (baseline)",
+    "generic":       "Custom feature extractor defined by a user-supplied forward function",
+}
+
+_METRIC_DESCRIPTIONS = {
+    "irs":       "IRS — Image Retrieval Score: measures diversity / memorisation (CVPR 2025)",
+    "fid":       "FID — Fréchet Inception Distance: fidelity + diversity (lower is better)",
+    "kid":       "KID — Kernel Inception Distance: unbiased FID alternative",
+    "fld":       "FLD — Fréchet LPIPS Distance (requires optional fld package)",
+    "prdc":      "Precision, Recall, Density, Coverage: separate fidelity / diversity scores",
+    "is_score":  "Inception Score: quality and variety via InceptionV3 class predictions",
+    "authpct":   "AuthPct: fraction of synthetic samples not memorised from training data",
+    "cttest":    "C2ST: two-sample classifier test for distribution matching",
+    "diversity": "Diversity: intra-set feature distance (Rényi entropy of α=2,4)",
+    "vendi":     "Vendi Score: diversity via matrix-rank of the kernel similarity matrix",
+}
+
+
 def get_args():
-    parser = argparse.ArgumentParser(description="BeyondFID CLI")
-    parser.add_argument("pathtrain", type=str, help="Train data dir or csv with paths to train data. Recursively looks through data dir")
-    parser.add_argument("pathtest", type=str, help="Test data dir or csv with paths to test data. Recursively looks through data dir")
-    parser.add_argument("pathsynth", type=str, help="Synth data dir or csv with paths to synthetic data. Recursively looks through data dir")
+    feature_extractor_help = "\n".join(
+        f"  {name:<16} {desc}" for name, desc in _FEATURE_MODEL_DESCRIPTIONS.items()
+        if name in _FEATURE_MODELS
+    )
+    metric_help = "\n".join(
+        f"  {name:<12} {desc}" for name, desc in _METRIC_DESCRIPTIONS.items()
+        if name in _METRICS
+    )
 
-    parser.add_argument("--feature_extractors", type=str, nargs="+", default=[], help="What feature extractors to use. Leave empty to compute all available features.", choices=_FEATURE_MODELS.keys())
-    parser.add_argument("--metrics", type=str, nargs="+", default=[], help="What metrics to use. Leave empty to compute all available metrics.", choices=_METRICS.keys())
+    description = (
+        "BeyondFID — evaluation toolkit for unconditional image generation.\n\n"
+        "Computes feature-based generative metrics (FID, KID, IRS, Precision/Recall, …)\n"
+        "from three image datasets: a training set, a held-out test set, and a synthetic set.\n"
+        "Features are cached on disk keyed by a hash of the file list, so re-running with\n"
+        "different metrics on the same data skips the expensive feature extraction step.\n\n"
+        "Paper: https://openaccess.thecvf.com/content/CVPR2025/html/"
+        "Dombrowski_Image_Generation_Diversity_Issues_and_How_to_Tame_Them_CVPR_2025_paper.html"
+    )
 
-    parser.add_argument("--config", type=str, default="", help="Configuration file. Defaults all values to config.py. All values set here will be overwritten")
-    parser.add_argument("--output_path", type=str, default="resultsbeyondfid", help="Output path to save feature tensors and results.")
-    parser.add_argument("--results_filename", type=str, default="results.json", help="Name of file with results. Defaults to <output_path>/results.json")
+    epilog = (
+        "Available feature extractors:\n"
+        f"{feature_extractor_help}\n\n"
+        "Available metrics:\n"
+        f"{metric_help}\n\n"
+        "Examples:\n"
+        "  # IRS with the recommended SwAV backbone (fastest, most reliable)\n"
+        "  beyondfid data/train data/test data/synth --feature_extractors swav --metrics irs\n\n"
+        "  # FID + KID with Inception features (classic setup)\n"
+        "  beyondfid data/train data/test data/synth --feature_extractors inception --metrics fid kid\n\n"
+        "  # Multiple extractors and metrics in one pass (features computed once, reused per metric)\n"
+        "  beyondfid data/train data/test data/synth \\\n"
+        "      --feature_extractors swav inception dinov2 \\\n"
+        "      --metrics irs fid prdc\n\n"
+        "  # Override a single config value on the command line\n"
+        "  beyondfid data/train data/test data/synth \\\n"
+        "      --config-update metrics.prdc.nearest_k=3\n\n"
+        "  # Use a custom config file (see beyondfid/default_config.py for the format)\n"
+        "  beyondfid data/train data/test data/synth --config my_config.py\n\n"
+        "Dataset formats accepted for each path argument:\n"
+        "  folder   Plain directory — all images found recursively\n"
+        "  .csv     CSV with columns 'FileName' and 'Split' (TRAIN / VAL / TEST)\n"
+        "  .pt      Pre-saved torch tensor (3-D = image, 4-D = video)\n"
+    )
 
-    # Add an argument for dynamic config updates
-    parser.add_argument('--config-update', action=UpdateConfigAction, nargs='+', help="Update config parameters, e.g., --config-update=config.feature_extractors.byol.batch_size=16")
-    parser.add_argument('--master_port', type=int, default=12344)
+    parser = argparse.ArgumentParser(
+        description=description,
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    parser.add_argument(
+        "pathtrain",
+        type=str,
+        help="Real training data: folder, .csv file, or .pt tensor.",
+    )
+    parser.add_argument(
+        "pathtest",
+        type=str,
+        help=(
+            "Real held-out test data: folder, .csv file, or .pt tensor. "
+            "Used as the reference distribution for IRS and as a second anchor for FLD. "
+            "Can be the same path as pathtrain when a separate test split is unavailable."
+        ),
+    )
+    parser.add_argument(
+        "pathsynth",
+        type=str,
+        help="Synthetic data to evaluate: folder, .csv file, or .pt tensor.",
+    )
+    parser.add_argument(
+        "--feature_extractors",
+        type=str,
+        nargs="+",
+        default=[],
+        choices=_FEATURE_MODELS.keys(),
+        metavar="EXTRACTOR",
+        help=(
+            "One or more feature extractors to use. Features are computed once and reused "
+            "across all requested metrics. Defaults to the extractors listed in default_config.py "
+            "(inception, byol). Run with -h to see all available extractors and their descriptions."
+        ),
+    )
+    parser.add_argument(
+        "--metrics",
+        type=str,
+        nargs="+",
+        default=[],
+        choices=_METRICS.keys(),
+        metavar="METRIC",
+        help=(
+            "One or more metrics to compute. Defaults to the metric list in default_config.py. "
+            "Run with -h to see all available metrics and their descriptions."
+        ),
+    )
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="",
+        help=(
+            "Path to a Python config file that overrides values in default_config.py. "
+            "See beyondfid/default_config.py for the expected format and all available keys."
+        ),
+    )
+    parser.add_argument(
+        "--output_path",
+        type=str,
+        default="resultsbeyondfid",
+        help=(
+            "Directory where cached feature tensors and the results file are saved. "
+            "Features are keyed by a hash of the file list and reused on subsequent runs. "
+            "Default: %(default)s"
+        ),
+    )
+    parser.add_argument(
+        "--results_filename",
+        type=str,
+        default="results.json",
+        help="Name of the JSON file written inside --output_path. Default: %(default)s",
+    )
+    parser.add_argument(
+        "--config-update",
+        action=UpdateConfigAction,
+        nargs="+",
+        metavar="KEY=VALUE",
+        help=(
+            "Override individual config values without a full config file. "
+            "Use dot notation matching the structure of default_config.py. "
+            "Example: --config-update metrics.prdc.nearest_k=3 feature_extractors.inception.batch_size=32"
+        ),
+    )
+    parser.add_argument(
+        "--master_port",
+        type=int,
+        default=None,
+        help=(
+            "Port used by torch.distributed for multi-GPU communication. "
+            "A free port is chosen automatically if this is omitted or if the given port is occupied."
+        ),
+    )
     return parser.parse_args()
-
-
-def find_free_port(start_port):
-    """Finds a free port starting from `start_port`, falling back to any available port."""
-    port = start_port
-    while port < 65535:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            try:
-                s.bind(('', port))
-                return port
-            except OSError:
-                port += 1  # Try the next port
-
-    # If all ports are occupied, get a random free port
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
-        return s.getsockname()[1]
 
 
 def main():
@@ -211,12 +347,14 @@ def main():
         config = update_config(config, args.config)
     if args.metrics != []: 
         config.metric_list = ",".join(args.metrics)
-    if args.feature_extractors != []: 
+    if args.feature_extractors != []:
         config.feature_extractors.names = ",".join(args.feature_extractors)
         logger.info(f"Overwriting models setting for all metrics and setting it to {config.feature_extractors.names}")
         for metric in _METRICS.keys():
             getattr(config.metrics, metric).models =  config.feature_extractors.names
-    config.master_port = find_free_port(args.master_port)
+    if args.master_port is not None:
+        from beyondfid.utils import find_free_port
+        config.master_port = find_free_port(args.master_port)
     run(args.pathtrain, args.pathtest, args.pathsynth, args.output_path, args.results_filename, config)
 
 

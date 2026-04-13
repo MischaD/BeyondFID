@@ -2,9 +2,24 @@ from importlib.machinery import SourceFileLoader
 from beyondfid.data import ALLOWED_EXTENSIONS
 import os
 import json
+import socket
 from beyondfid.log import logger
-import torch 
+import torch
 import torch.nn.functional as F
+
+
+def find_free_port(port=None):
+    """Return a free port. If `port` is given and available, use it; otherwise let the OS pick one."""
+    if port is not None:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(('', port))
+                return port
+            except OSError:
+                logger.warning(f"Port {port} is already in use, picking a free port automatically.")
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        return s.getsockname()[1]
 
 
 def make_exp_config(exp_file):

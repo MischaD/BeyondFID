@@ -1,9 +1,10 @@
 import ml_collections
 from torchvision import transforms as T
+from beyondfid.utils import find_free_port
 
 
 config = ml_collections.ConfigDict()
-config.master_port = 12344
+config.master_port = find_free_port()
 config.basedir = "" # automatically extracts it from the Filepath
 config.filename_key = "FileName"
 

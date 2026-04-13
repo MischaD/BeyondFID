@@ -56,12 +56,16 @@ def load_feature_model(config):
 from beyondfid.feature_extractor_models.byol import BYOL
 from beyondfid.feature_extractor_models.inception import InceptionV3
 from beyondfid.feature_extractor_models.dinov2 import DINOv2
-from beyondfid.feature_extractor_models.clip import CLIP 
-from beyondfid.feature_extractor_models.convnext import ConvNeXTEncoder 
+from beyondfid.feature_extractor_models.convnext import ConvNeXTEncoder
 from beyondfid.feature_extractor_models.data2vec import HuggingFaceTransformerEncoder
 from beyondfid.feature_extractor_models.swav import ResNet50Encoder
-from beyondfid.feature_extractor_models.flatten import Flatten, FlattenResize 
+from beyondfid.feature_extractor_models.flatten import Flatten, FlattenResize
 from beyondfid.feature_extractor_models.sdvae import SDVAE
 
 from beyondfid.feature_extractor_models.cxr import CXR
 from beyondfid.feature_extractor_models.mae import VisionTransformerEncoder
+
+try:
+    from beyondfid.feature_extractor_models.clip import CLIP
+except ImportError:
+    pass  # clip is optional; install with: pip install "git+https://github.com/openai/CLIP.git"

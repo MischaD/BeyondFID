@@ -2,12 +2,12 @@
 Our paper has been accepted at CVPR 2025. You can read our paper [here](https://openaccess.thecvf.com/content/CVPR2025/html/Dombrowski_Image_Generation_Diversity_Issues_and_How_to_Tame_Them_CVPR_2025_paper.html).
 
 ## Usage 
-This repository focusses on the use of **IRS**, a diversity metric we proposed. If you want to use DiADM have a look at [this repository](https://github.com/MischaD/Trichotomy). It provides a python package to streamline evaluation of (unconditional) image generation models. 
+This repository focusses on the use of **IRS (Image Retrieval Score)**, a diversity metric we proposed. If you want to use DiADM have a look at [this repository](https://github.com/MischaD/Trichotomy). It provides a python package to streamline evaluation of (unconditional) image generation models. 
 If you have a folder full of images or videos and want to compute image-wise generative metrics you are at the right place. 
 
 Use this package to compute IRS: 
 
-- [IRS](https://openaccess.thecvf.com/content/CVPR2025/html/Dombrowski_Image_Generation_Diversity_Issues_and_How_to_Tame_Them_CVPR_2025_paper.html)
+- [IRS — Image Retrieval Score](https://openaccess.thecvf.com/content/CVPR2025/html/Dombrowski_Image_Generation_Diversity_Issues_and_How_to_Tame_Them_CVPR_2025_paper.html)
 
 Other supported metrics are: 
 
@@ -30,7 +30,7 @@ Other supported metrics are:
 - [Usage](#usage)
   - [As CLI](#as-cli)
   - [Within Python](#within-python)
-  - [Extract IRS Score](#extracting-irs-score)
+  - [Extract IRS Score](#extracting-irs-image-retrieval-score)
 - [Advanced Usage](#advanced-usage)
   - [How to Add a New Feature Extraction Model](#how-to-add-a-new-feature-extraction-model)
     - [The Quick Way](#the-quick-way)
@@ -168,12 +168,12 @@ print(results["dinov2"]["fid_train"]) # fid with dino features between synthetic
 
     config.feature_extractors.always_overwrite_snth = False
 
-### Extracting IRS Score 
+### Extracting IRS (Image Retrieval Score) 
 
 The results will be safed in a .json file. To extract the adjusted irs score we suggest SWaV as explained in the paper (jsonfile["swav"]["irs_adjusted"]).  
 
 
-#### Which IRS Score to report? 
+#### Which IRS (Image Retrieval Score) to report? 
 To know if you which IRS score is most relevant you have to understand the Measurement Gap as described in [IRS](https://openaccess.thecvf.com/content/CVPR2025/html/Dombrowski_Image_Generation_Diversity_Issues_and_How_to_Tame_Them_CVPR_2025_paper.html). Here is the key rule that you need to understand: 
 
 - If your training set is small (in relation to snth), then you can ignore the measurement gap and report jsonfile["swav"]["snth"]["irs_inf"] directly. 

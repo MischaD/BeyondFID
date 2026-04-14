@@ -7,33 +7,43 @@ setup(
     entry_points={
         "console_scripts": [
             "beyondfid=beyondfid.run:main",
+            "beyondfid-check=beyondfid.check:main",
         ],
     },
     install_requires=[
+        # Core — always required
         'torch>=2.0.0',
         'torchvision>=0.15.0',
         'ml_collections>=0.1.1',
         'pandas>=1.5.0',
-        'timm>=0.9.0',
-        'diffusers>=0.21.0',
-        'accelerate>=0.21.0',
         'matplotlib>=3.7.0',
-        'transformers>=4.30.0',
         'opencv-python-headless>=4.8.0',
         'scikit-learn>=1.3.0',
         'numpy>=1.24.0',
         'pillow>=10.0.0',
         'tqdm>=4.65.0',
+        'h5py>=3.0.0',
     ],
     extras_require={
-        # pip install "beyondfid[clip]"
+        # Model-specific — only needed when that feature extractor is used
+        # pip install "beyondfid[transformers]"  → data2vec
+        'transformers': ['transformers>=4.30.0'],
+        # pip install "beyondfid[diffusers]"     → sdvae
+        'diffusers': ['diffusers>=0.21.0', 'accelerate>=0.21.0'],
+        # pip install "beyondfid[timm]"          → convnext, mae
+        'timm': ['timm>=0.9.0'],
+        # pip install "beyondfid[clip]"          → clip (git-only package)
         'clip': ['clip @ git+https://github.com/openai/CLIP.git'],
-        # pip install "beyondfid[fld]"
+        # pip install "beyondfid[fld]"           → FLD metric (git-only package)
         'fld': ['fld @ git+https://github.com/marcojira/fld.git'],
-        # pip install "beyondfid[video]"
+        # pip install "beyondfid[video]"         → video preprocessing
         'video': ['av>=10.0.0'],
-        # pip install "beyondfid[all]"
+        # pip install "beyondfid[all]"           → everything
         'all': [
+            'transformers>=4.30.0',
+            'diffusers>=0.21.0',
+            'accelerate>=0.21.0',
+            'timm>=0.9.0',
             'clip @ git+https://github.com/openai/CLIP.git',
             'fld @ git+https://github.com/marcojira/fld.git',
             'av>=10.0.0',

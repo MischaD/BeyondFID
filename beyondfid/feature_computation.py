@@ -175,14 +175,18 @@ def precompute_features_from_path(config, fe_config, outdir, path, fe_name, spli
     None
         hashname of the dataset. 
     """
-    # path can be directory containing files or .csv, or large tenors 
+    # path can be directory, .csv, .pt tensor, .h5 file, or in-memory data
     if isinstance(path, str):
-        if path.endswith(".pt"): 
+        if path.endswith(".pt"):
             return precompute_features_from_tensor(path, fe_config, outdir, path, fe_name, split=None)
-        file_list_are_paths = True
-        basedir = os.path.dirname(path) if not os.path.isdir(path) else path 
-    else: 
-        file_list_are_paths = False 
+        elif path.endswith(".h5"):
+            file_list_are_paths = False
+            basedir = path
+        else:
+            file_list_are_paths = True
+            basedir = os.path.dirname(path) if not os.path.isdir(path) else path
+    else:
+        file_list_are_paths = False
         basedir = None
         if hasattr(config, "overwrite_basedir"):
             basedir = config.overwrite_basedir

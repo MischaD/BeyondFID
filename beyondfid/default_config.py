@@ -7,6 +7,7 @@ config = ml_collections.ConfigDict()
 config.master_port = find_free_port()
 config.basedir = "" # automatically extracts it from the Filepath
 config.filename_key = "FileName"
+config.h5_dataset_key = "images"  # dataset key inside HDF5 files
 
 feature_models = "inception,byol"#,byol,random,dinov2,clip" # all of these features will be computed
 config.metric_list = "irs,fid,prdc,is_score,cttest,authpct,fld,kid,vendi"

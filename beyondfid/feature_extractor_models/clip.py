@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 import torchvision.transforms as transforms
-import clip
 from beyondfid.feature_extractor_models import BaseFeatureModel, register_feature_model
 
 
@@ -9,13 +8,12 @@ from beyondfid.feature_extractor_models import BaseFeatureModel, register_featur
 class CLIP(BaseFeatureModel, nn.Module):
     def __init__(self, model_config):
         super().__init__()
+        import clip
 
         self.features_size = 512
         self.preprocess = transforms.Compose(
             [
-                transforms.Resize(
-                    224
-                ),
+                transforms.Resize(224),
                 transforms.CenterCrop(224),
                 transforms.Normalize(
                     (0.48145466, 0.4578275, 0.40821073),

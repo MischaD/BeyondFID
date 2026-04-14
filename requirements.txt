@@ -1,27 +1,45 @@
+# ── Core (always required) ────────────────────────────────────────────────────
 torch>=2.0.0
 torchvision>=0.15.0
 ml_collections>=0.1.1
 pandas>=1.5.0
-timm>=0.9.0
-diffusers>=0.21.0
-accelerate>=0.21.0
 matplotlib>=3.7.0
-transformers>=4.30.0
-# Use headless variant — opencv-python requires libGL which is absent on most HPC/headless systems
+# headless variant — opencv-python requires libGL absent on most HPC systems
 opencv-python-headless>=4.8.0
 scikit-learn>=1.3.0
 numpy>=1.24.0
 pillow>=10.0.0
 tqdm>=4.65.0
+h5py>=3.0.0
 
-# Optional: CLIP feature extractor
+# ── Model-specific (lazy-imported; only needed for the listed extractor) ──────
+
+# data2vec feature extractor
+# pip install "beyondfid[transformers]"  or:  pip install transformers>=4.30.0
+# transformers>=4.30.0
+
+# sdvae feature extractor
+# pip install "beyondfid[diffusers]"  or:  pip install diffusers>=0.21.0 accelerate>=0.21.0
+# diffusers>=0.21.0
+# accelerate>=0.21.0
+
+# convnext and mae feature extractors
+# pip install "beyondfid[timm]"  or:  pip install timm>=0.9.0
+# timm>=0.9.0
+
+# ── Optional extras (git-only or heavyweight) ─────────────────────────────────
+
+# CLIP feature extractor (no PyPI release)
 # pip install "git+https://github.com/openai/CLIP.git"
 
-# Optional: FLD metric
+# FLD metric (no PyPI release)
 # pip install "git+https://github.com/marcojira/fld.git"
 
-# Optional: video preprocessing (preprocess_videos.py)
-# av>=10.0.0
+# Video preprocessing (preprocess_videos.py)
+# pip install av>=10.0.0
 
-# Optional: xformers (speeds up DINOv2 attention, falls back to MLP without it)
+# xformers — speeds up DINOv2 attention; falls back to MLP without it
 # conda install xformers -c xformers
+
+# ── Install everything at once ────────────────────────────────────────────────
+# pip install -e ".[all]"

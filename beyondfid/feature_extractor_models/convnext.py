@@ -2,8 +2,6 @@
 from beyondfid.feature_extractor_models import BaseFeatureModel, register_feature_model
 from torchvision import transforms
 from torch import nn
-from timm.models import create_model
-from timm.data.constants import  IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, OPENAI_CLIP_MEAN, OPENAI_CLIP_STD
 import sys
 
 
@@ -11,7 +9,7 @@ import sys
 class ConvNeXTEncoder(BaseFeatureModel, nn.Module):
     """
     requires timm version: 0.8.19.dev0
-    model_arch options: 
+    model_arch options:
         convnext_xlarge_in22k (imagenet 21k); default
         convnext_xxlarge.clip_laion2b_rewind (clip objective trained on laion2b)
 
@@ -20,6 +18,12 @@ class ConvNeXTEncoder(BaseFeatureModel, nn.Module):
     """
     def __init__(self, model_config):
         super().__init__()
+        from timm.models import create_model
+        from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, OPENAI_CLIP_MEAN, OPENAI_CLIP_STD
+        self._IMAGENET_DEFAULT_MEAN = IMAGENET_DEFAULT_MEAN
+        self._IMAGENET_DEFAULT_STD = IMAGENET_DEFAULT_STD
+        self._OPENAI_CLIP_MEAN = OPENAI_CLIP_MEAN
+        self._OPENAI_CLIP_STD = OPENAI_CLIP_STD
         self.arch = model_config.arch
         self.model = create_model(
                     self.arch,
@@ -38,19 +42,19 @@ class ConvNeXTEncoder(BaseFeatureModel, nn.Module):
     def build_transform(self):
         # get mean & std based on the model arch
         if self.arch == "convnext_xlarge.fb_in22k":
-            mean = IMAGENET_DEFAULT_MEAN
-            std = IMAGENET_DEFAULT_STD
+            mean = self._IMAGENET_DEFAULT_MEAN
+            std = self._IMAGENET_DEFAULT_STD
         elif "clip" in self.arch:
-            mean = OPENAI_CLIP_MEAN
-            std = OPENAI_CLIP_STD
+            mean = self._OPENAI_CLIP_MEAN
+            std = self._OPENAI_CLIP_STD
 
         t = []
 
         # warping (no cropping) when evaluated at 384 or larger
         if self.input_size >= 384:
             t.append(
-            transforms.Resize((self.input_size, self.input_size), 
-                            interpolation=transforms.InterpolationMode.BICUBIC), 
+            transforms.Resize((self.input_size, self.input_size),
+                            interpolation=transforms.InterpolationMode.BICUBIC),
         )
             print(f"Warping {self.input_size} size input images...", file=sys.stderr)
         else:

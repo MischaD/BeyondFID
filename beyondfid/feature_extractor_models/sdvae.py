@@ -1,13 +1,13 @@
 import torch
 from torch import nn
 import torchvision.transforms as transforms
-from diffusers import AutoencoderKL
 from beyondfid.feature_extractor_models import BaseFeatureModel, register_feature_model
 
 @register_feature_model(name="sdvae")
 class SDVAE(BaseFeatureModel, nn.Module):
     def __init__(self, model_config):
         super().__init__()
+        from diffusers import AutoencoderKL
         self.config = model_config
 
         self.model = AutoencoderKL.from_pretrained(self.config.path, subfolder="vae")

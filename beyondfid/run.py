@@ -240,6 +240,11 @@ def get_args():
         "  folder   Plain directory — all images found recursively\n"
         "  .csv     CSV with columns 'FileName' and 'Split' (TRAIN / VAL / TEST)\n"
         "  .pt      Pre-saved torch tensor (3-D = image, 4-D = video)\n"
+        "  .h5      HDF5 file — all images are always used (no split filtering)\n\n"
+        "HDF5 usage:\n"
+        "  beyondfid train.h5 test.h5 synth.h5 --feature_extractors swav --metrics irs\n\n"
+        "  # Override the HDF5 dataset key (default: 'images')\n"
+        "  beyondfid train.h5 test.h5 synth.h5 --config-update h5_dataset_key=data\n"
     )
 
     parser = argparse.ArgumentParser(

@@ -23,9 +23,11 @@ Other supported metrics are:
 # Table of Contents
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [Sanity Check (beyondfid-check)](#sanity-check-beyondfid-check)
 - [Supported Dataset Structure](#supported-dataset-structure)
   - [Folders](#folders)
   - [CSV File Structure](#csv-file-structure)
+  - [HDF5 Files](#hdf5-files)
   - [Large Tensors](#large-tensors)
 - [Usage](#usage)
   - [As CLI](#as-cli)
@@ -80,6 +82,74 @@ Finally, the last output is
 It will also create a folder "resultsbeyondfid" (set by --output_path) that saves preliminary feature vectors to disk and all results in result.json
 For more details and advanced usage refer to the paper or the instructions below. 
 
+## Sanity Check (beyondfid-check)
+
+Before launching a long job it is worth verifying that your paths are readable and correctly formatted. `beyondfid-check` loads the first image from each path and prints the item count and tensor dimensions — catching wrong file extensions or column names in seconds instead of minutes.
+
+```bash
+# Mirrors the beyondfid argument interface — just prepend "beyondfid-check"
+beyondfid-check data/train/ data/test/ data/synth/
+beyondfid-check data/splits.csv data/splits.csv data/synth.csv
+beyondfid-check data/splits.csv data/splits.csv data/synth.csv --filename_key path
+beyondfid-check data/train.h5 data/test.h5 data/synth.h5
+beyondfid-check data/train.h5 data/test.h5 data/synth.h5 --h5_dataset_key data
+```
+
+Example output:
+
+```
+[train]
+Checking: data/train.h5
+------------------------------------------------------------
+Type:  HDF5
+Key:   'images'
+Count: 50000 images
+First entry (index 0):
+  shape=(3, 1024, 1024), dtype=torch.float32, min=0.000, max=1.000
+
+[test]
+Checking: data/test.h5
+------------------------------------------------------------
+Type:  HDF5
+Key:   'images'
+Count: 10000 images
+First entry (index 0):
+  shape=(3, 1024, 1024), dtype=torch.float32, min=0.000, max=1.000
+
+[synth]
+Checking: data/synth.h5
+------------------------------------------------------------
+Type:  HDF5
+Key:   'images'
+Count: 50000 images
+First entry (index 0):
+  shape=(3, 1024, 1024), dtype=torch.float32, min=0.000, max=1.000
+
+All paths OK.
+```
+
+For CSV files the per-split breakdown is shown automatically:
+
+```
+[train]
+Checking: data/splits.csv
+------------------------------------------------------------
+Type:  CSV
+Key:   'FileName'
+Count: 60000 rows total
+  TEST:  10000 rows
+  TRAIN: 50000 rows
+First entry: train/n01440764/n01440764_14506.JPEG
+  shape=(3, 512, 512), dtype=torch.float32, min=0.000, max=1.000
+```
+
+`beyondfid-check` exits with code 1 if any path fails, making it safe to use as a preflight step in a SLURM script:
+
+```bash
+beyondfid-check data/train.h5 data/test.h5 data/synth.h5 || exit 1
+beyondfid      data/train.h5 data/test.h5 data/synth.h5 --feature_extractors swav --metrics irs fid
+```
+
 ## Supported Dataset Structure 
 There are three potential ways to define datasets:  
 
@@ -112,7 +182,18 @@ There are three potential ways to define datasets:
 
     For example if you have **./data/FileList.csv** as argument for pathtrain then it expects the image to be in ./data/l1/example_000.png
 
-3. **Large Tensors**
+3. **HDF5 Files**
+
+    Pass `.h5` files directly — all images in the file are always used:
+
+        beyondfid data/train.h5 data/test.h5 data/synth.h5 --feature_extractors swav --metrics irs
+
+    The dataset key inside the HDF5 file defaults to `images`. Override with:
+
+        beyondfid data/train.h5 data/test.h5 data/synth.h5 \
+            --config-update h5_dataset_key=data
+
+4. **Large Tensors**
 
     In case you do not want so save the images on disk have a look at *How to use a generator function instead of saving the models on disk*
 

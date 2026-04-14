@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from beyondfid.log import logger
 
-ALLOWED_EXTENSIONS = ('.png', '.jpg', '.pt', '.mp4', '.avi')
+ALLOWED_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.JPEG', '.pt', '.mp4', '.avi', '.h5')
 
 
 def hash_dataset_path(dataset_root_dir, img_list, descriptor=""):
@@ -15,13 +15,34 @@ def hash_dataset_path(dataset_root_dir, img_list, descriptor=""):
 
 def get_data_csv(path, fe_name, config=None, split=None):
     data_csv = pd.read_csv(path)
-    if split is not None: 
+    if split is not None:
         data_csv = data_csv[data_csv["Split"]==split]
-    # Get filename_key from config, defaulting to "FileName" if not provided
     filename_key = getattr(config, "filename_key", "FileName")
     file_list = list(data_csv[filename_key])
-    output_filename = hash_dataset_path(os.path.dirname(path),img_list=file_list, descriptor=fe_name)
+    output_filename = hash_dataset_path(os.path.dirname(path), img_list=file_list, descriptor=fe_name)
     return file_list, os.path.basename(output_filename)
+
+
+def get_data_h5(path, fe_name, dataset_key="images"):
+    """Return (None, hash_name) for a standalone .h5 file — all images are used."""
+    try:
+        import h5py
+    except ImportError:
+        raise ImportError("h5py is required for H5 support. Install with: pip install h5py")
+    with h5py.File(path, "r") as f:
+        if dataset_key not in f:
+            available = list(f.keys())
+            dataset_key = available[0]
+            logger.warning(
+                f"H5 key 'images' not found in {path}. "
+                f"Using '{dataset_key}'. Available keys: {available}"
+            )
+        n = len(f[dataset_key])
+    file_size = os.path.getsize(path)
+    hash_input = f"{os.path.abspath(path)}:{file_size}:{dataset_key}:{n}"
+    hash_name = hashlib.sha1(hash_input.encode("utf-8")).hexdigest()
+    logger.info(f"{n} images found in H5 file {path} (key='{dataset_key}')")
+    return None, f"hashdata_{fe_name}_{hash_name}"
 
 
 def get_data_from_folder(path, fe_name, config=None):
@@ -75,19 +96,27 @@ def get_data_from_list(out_path, file_list, fe_name):
 
 
 def get_data(config, path, fe_name, split):
-    """Returns list of files in path. Path can be csv or folder that will be searched recursively. 
-    Also computes the hash for the output tensor.
-    """
-    if isinstance(path, dict): 
-        # path is dict containing a list of images already loaded. 
-        file_key, img_list = next(iter(path.items()))
-        return img_list, "hashdata_" + fe_name + "_" + f"{file_key}" 
+    """Returns (file_list, hash_name) for the given path.
 
-    elif isinstance(path, list): 
-        out_path = config.get("generic_out_path", ".") 
+    Supported path types:
+      - dict  : in-memory image tensor dict
+      - list  : in-memory file/tensor list
+      - .csv  : CSV with 'FileName' and optionally 'Split' columns
+      - .h5   : HDF5 file — all images are always used (split is ignored)
+      - folder: directory searched recursively for images
+    """
+    if isinstance(path, dict):
+        file_key, img_list = next(iter(path.items()))
+        return img_list, "hashdata_" + fe_name + "_" + f"{file_key}"
+
+    elif isinstance(path, list):
+        out_path = config.get("generic_out_path", ".")
         return get_data_from_list(out_path, path, fe_name)
 
     if path.endswith(".csv"):
         return get_data_csv(path, fe_name, config, split)
-    else: 
+    elif path.endswith(".h5"):
+        dataset_key = getattr(config, "h5_dataset_key", "images")
+        return get_data_h5(path, fe_name, dataset_key=dataset_key)
+    else:
         return get_data_from_folder(path, fe_name, config)

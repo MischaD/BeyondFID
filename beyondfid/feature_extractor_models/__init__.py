@@ -52,7 +52,10 @@ def load_feature_model(config):
     return model_class(config.config)
 
 
-# register modules
+# Register feature extractor modules.
+# Heavy third-party imports (transformers, diffusers, timm, clip) are deferred
+# to each class's __init__, so a version mismatch in one model's dependencies
+# never prevents the package or other models from loading.
 from beyondfid.feature_extractor_models.byol import BYOL
 from beyondfid.feature_extractor_models.inception import InceptionV3
 from beyondfid.feature_extractor_models.dinov2 import DINOv2
@@ -61,7 +64,6 @@ from beyondfid.feature_extractor_models.data2vec import HuggingFaceTransformerEn
 from beyondfid.feature_extractor_models.swav import ResNet50Encoder
 from beyondfid.feature_extractor_models.flatten import Flatten, FlattenResize
 from beyondfid.feature_extractor_models.sdvae import SDVAE
-
 from beyondfid.feature_extractor_models.cxr import CXR
 from beyondfid.feature_extractor_models.mae import VisionTransformerEncoder
 
